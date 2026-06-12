@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import Graph from './Graph'
 import DustMode from './DustMode'
 import FocusSpace from './FocusSpace'
-import MediaStage from './MediaStage'
 import Controls from './Controls'
 import { useSimulation } from './useSimulation'
 import { ancestorsOf } from './layout'
@@ -34,12 +33,6 @@ export default function App() {
   // bumped by the physics panel — re-kicks the simulation with the
   // freshly tuned parameters
   const [tuneV, setTuneV] = useState(0)
-
-  // FOCAL expand/contract: arriving at a piece of WORK (a leaf with a
-  // media set) lets the corridor settle, then contracts the nav into a
-  // live miniature while the media takes the stage. Navigating
-  // anywhere else expands it back.
-  const [engaged, setEngaged] = useState(false)
   const containerRef = useRef(null)
   const [dims, setDims] = useState({ width: 0, height: 0 })
 
@@ -58,16 +51,6 @@ export default function App() {
   }, [])
 
   const sim = useSimulation(activeId, dims.width, dims.height, mode, tuneV)
-
-  const activeNode = sim.byId.get(activeId)
-  useEffect(() => {
-    if (mode !== 'focus' || !activeNode?.media) {
-      setEngaged(false)
-      return
-    }
-    const t = setTimeout(() => setEngaged(true), 900)
-    return () => clearTimeout(t)
-  }, [activeId, mode, activeNode])
 
   // Cross-window sync (also handy as a dev/debug hook): navigating in
   // one window steers every other open window via localStorage events.
@@ -122,23 +105,12 @@ export default function App() {
             tuneV={tuneV}
           />
         ) : mode === 'focus' ? (
-          <>
-            <FocusSpace
-              sim={sim}
-              activeId={activeId}
-              width={dims.width}
-              mini={engaged}
-              onNavigate={navigate}
-            />
-            {engaged && activeNode?.media && (
-              <MediaStage
-                node={activeNode}
-                width={dims.width}
-                height={dims.height}
-                onClose={() => setEngaged(false)}
-              />
-            )}
-          </>
+          <FocusSpace
+            sim={sim}
+            activeId={activeId}
+            width={dims.width}
+            onNavigate={navigate}
+          />
         ) : (
           <Graph
             width={dims.width}
