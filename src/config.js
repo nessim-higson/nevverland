@@ -59,6 +59,12 @@ export const PHYSICS = {
   SPACING: 12,    // extra collision padding between labels — the
                   // anti-overlap dial (0 = touching allowed)
 
+  // FOCAL: how a project's media emits from its word.
+  //   arc   — frames ring the word on a stable arc
+  //   orbit — the ring slowly revolves around the word
+  //   fan   — frames trail away INTO the corridor's depth
+  EMIT: 'arc',
+
   // Presence: the system reacts to you before you click.
   CURSOR: 0.35,   // cursor gravity — labels lean toward (+) or away
                   // from (−) the pointer, like grass parting

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { fsFor } from './config'
+import { PHYSICS as P, fsFor } from './config'
 
 // Media emission: at a project, the frames EMIT from the focus word —
 // fanned on an arc around it (skipping the bottom, where the copy
@@ -12,11 +12,32 @@ const ARC_SPAN = 220
 const EMIT_R = 265 // ring radius while browsing
 const CHIP_R = 150 // ring radius while an image is full screen
 
-function emitSlots(n, full) {
-  const r = full ? CHIP_R : EMIT_R
+// Three emission versions (P.EMIT, switchable in the physics panel):
+//   arc   — stable arc over the word, skipping the copy below
+//   orbit — a full ring slowly revolving around the word
+//   fan   — frames trailing away into the corridor's depth
+function emitSlots(n, full, variant, t) {
+  // chips always settle onto the stable arc — image nav stays still
+  if (full || variant === 'arc') {
+    const r = full ? CHIP_R : EMIT_R
+    return Array.from({ length: n }, (_, i) => {
+      const a =
+        ((ARC_START + (n > 1 ? (i * ARC_SPAN) / (n - 1) : ARC_SPAN / 2)) * Math.PI) / 180
+      return { ox: Math.cos(a) * r * 1.25, oy: Math.sin(a) * r * 0.9, z: -150 }
+    })
+  }
+  if (variant === 'fan') {
+    return Array.from({ length: n }, (_, i) => ({
+      ox: 240 + i * 130,
+      oy: -36 - i * 38,
+      z: -110 - i * 175,
+    }))
+  }
+  // orbit — full ellipse, revolving
+  const spin = (t * 9 * Math.PI) / 180
   return Array.from({ length: n }, (_, i) => {
-    const a = ((ARC_START + (n > 1 ? (i * ARC_SPAN) / (n - 1) : ARC_SPAN / 2)) * Math.PI) / 180
-    return { ox: Math.cos(a) * r * 1.25, oy: Math.sin(a) * r * 0.9 }
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2 + spin
+    return { ox: Math.cos(a) * EMIT_R * 1.3, oy: Math.sin(a) * EMIT_R * 0.85, z: -150 }
   })
 }
 
@@ -55,6 +76,18 @@ export default function FocusSpace({ sim, activeId, width, onNavigate }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // orbit revolves even when the simulation itself is becalmed
+  const [, setSpin] = useState(0)
+  useEffect(() => {
+    let raf
+    const loop = () => {
+      if (P.EMIT === 'orbit') setSpin((s) => s + 1)
+      raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
   // parallax: deeper planes swing harder as the mouse moves
   useEffect(() => {
     const onMove = (e) => {
@@ -73,7 +106,9 @@ export default function FocusSpace({ sim, activeId, width, onNavigate }) {
   const media = isLeaf && active.media ? active.media : null
   // media-less leaves keep the corridor-end room image
   const room = !media && active?.img && isLeaf ? active : null
-  const slots = media ? emitSlots(media.length, fullI != null) : []
+  const slots = media
+    ? emitSlots(media.length, fullI != null, P.EMIT, performance.now() / 1000)
+    : []
   const full = media && fullI != null ? media[fullI] : null
 
   const fsOf = (role) =>
@@ -135,7 +170,7 @@ export default function FocusSpace({ sim, activeId, width, onNavigate }) {
                   width: w,
                   height: h,
                   zIndex: 20 + i,
-                  transform: `translate(calc(-50% + ${s.ox}px), calc(-50% + ${s.oy}px)) translateZ(-150px)`,
+                  transform: `translate(calc(-50% + ${s.ox}px), calc(-50% + ${s.oy}px)) translateZ(${s.z}px)`,
                   animationDelay: `${0.25 + i * 0.14}s`,
                 }}
                 onClick={() => setFullI(i)}

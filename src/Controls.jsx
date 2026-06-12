@@ -48,6 +48,22 @@ export default function Controls({ onTune }) {
       </button>
       {open && (
         <div className="tuneBody">
+          <div className="tuneRow tuneVariants">
+            <span className="tuneLabel">Emission</span>
+            {['arc', 'orbit', 'fan'].map((v) => (
+              <button
+                key={v}
+                className={P.EMIT === v ? 'on' : ''}
+                onClick={() => {
+                  P.EMIT = v
+                  setV((x) => x + 1)
+                  onTune()
+                }}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
           {PARAMS.map((p) => (
             <label key={p.key} className="tuneRow">
               <span className="tuneLabel">{p.label}</span>
