@@ -335,12 +335,6 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
   useEffect(() => {
     if (!width || !height) return
 
-    // DUST runs its own canvas engine — park the d3 simulation.
-    if (mode === 'dust') {
-      sim.stop()
-      return
-    }
-
     // STRUCTURE and IMAGERY build on the organic cascade physics —
     // they differ only in rendering (no lines, copy blocks, z-space
     // imagery), so they share the 'type' force configuration. FOCAL

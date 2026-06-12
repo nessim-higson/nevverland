@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import Graph from './Graph'
-import DustMode from './DustMode'
 import FocusSpace from './FocusSpace'
 import RingsSpace from './RingsSpace'
 import WeightSpace from './WeightSpace'
@@ -25,10 +24,9 @@ const MODES = [
   { key: 'structure', label: '03 STRUCTURE' },
   { key: 'imagery', label: '04 IMAGERY' },
   { key: 'depth', label: '05 DEPTH' },
-  { key: 'dust', label: '06 DUST' },
-  { key: 'focus', label: '07 FOCAL' },
-  { key: 'rings', label: '08 RINGS' },
-  { key: 'weight', label: '09 WEIGHT' },
+  { key: 'focus', label: '06 FOCAL' },
+  { key: 'rings', label: '07 RINGS' },
+  { key: 'weight', label: '08 WEIGHT' },
 ]
 
 export default function App() {
@@ -99,16 +97,7 @@ export default function App() {
       }}
     >
       {dims.width > 0 &&
-        (mode === 'dust' ? (
-          <DustMode
-            byId={sim.byId}
-            activeId={activeId}
-            width={dims.width}
-            height={dims.height}
-            onNavigate={navigate}
-            tuneV={tuneV}
-          />
-        ) : mode === 'focus' ? (
+        (mode === 'focus' ? (
           <FocusSpace
             sim={sim}
             activeId={activeId}

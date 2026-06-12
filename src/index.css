@@ -93,29 +93,6 @@ body {
   }
 }
 
-/* ── DUST: the site as a single substance ─────────────────── */
-
-.dustWrap {
-  position: absolute;
-  inset: 0;
-}
-
-.dustWrap .dust {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: block;
-}
-
-.dustWrap .stagefield {
-  z-index: 0;
-}
-
-.dustCopy {
-  z-index: 2;
-  animation: copyIn 1.2s ease 0.5s both;
-}
-
 /* ── FOCAL: the corridor — hierarchy lived in real z ──────── */
 
 .focusSpace {
