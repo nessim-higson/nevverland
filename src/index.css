@@ -1,0 +1,737 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: #0a0b0d;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: #eaeaea;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  /* faint vignette — the void the constellation floats in */
+  background: radial-gradient(
+    ellipse 90% 90% at 50% 45%,
+    #131418 0%,
+    #0a0b0d 70%
+  );
+}
+
+.graph {
+  display: block;
+  user-select: none;
+}
+
+.graph .label {
+  fill: #d8d8d6;
+  letter-spacing: 0.03em;
+  font-weight: 400;
+  pointer-events: none;
+}
+
+.graph .label.inside {
+  fill: #0c0d0f;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* type labels — Helvetica Neue sentence case; tracking set per role */
+.graph .tlabel {
+  pointer-events: none;
+}
+
+.modeToggle {
+  pointer-events: auto;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  color: rgba(255, 255, 255, 0.4);
+  font: inherit;
+  letter-spacing: 0.25em;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: color 0.3s, border-color 0.3s;
+}
+
+.modeToggle:hover {
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.chrome.bottom {
+  gap: 24px;
+}
+
+.graph .halo {
+  animation: breathe 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.05;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.1;
+    transform: scale(1.12);
+  }
+}
+
+/* ── DUST: the site as a single substance ─────────────────── */
+
+.dustWrap {
+  position: absolute;
+  inset: 0;
+}
+
+.dustWrap .dust {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+}
+
+.dustWrap .stagefield {
+  z-index: 0;
+}
+
+.dustCopy {
+  z-index: 2;
+  animation: copyIn 1.2s ease 0.5s both;
+}
+
+/* ── FOCAL: the corridor — hierarchy lived in real z ──────── */
+
+.focusSpace {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  perspective: 1000px;
+  perspective-origin: 50% 46%;
+  transform-style: preserve-3d;
+  overflow: hidden;
+  /* expand/contract: the whole living corridor scales as one object */
+  transform-origin: 7% 11%;
+  transition: transform 1.1s cubic-bezier(0.3, 1.02, 0.35, 1), opacity 0.9s ease;
+}
+
+/* WORK state: the whole corridor condenses INTO one word, top-left —
+   it pours back out of that word when clicked */
+.focusSpace.mini {
+  transform: scale(0.04);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fnode {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.fnodeInner {
+  /* z eases between planes on every move — the recession itself */
+  transition:
+    transform 0.95s cubic-bezier(0.3, 1.04, 0.35, 1),
+    filter 0.95s ease,
+    opacity 0.95s ease;
+  pointer-events: none;
+}
+
+.flabel {
+  display: inline-block;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  cursor: pointer;
+  color: #dededb;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  transition: color 0.3s ease;
+}
+
+.flabel.hot { color: #ffffff; }
+.flabel.activeL { font-weight: 700; color: #ffffff; letter-spacing: -0.015em; }
+
+.fcopy {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: 44ch;
+  font-size: 13px;
+  line-height: 21px;
+  letter-spacing: 0.01em;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+  /* opacity-only entrance — the positioning transform must survive */
+  animation: fcopyIn 1s ease 0.3s both;
+}
+
+@keyframes fcopyIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* the end of the corridor — a leaf's image, deepest plane */
+.froomImg {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 150vw;
+  height: 125vh;
+  object-fit: cover;
+  transform: translate(-50%, -50%) translateZ(-950px);
+  filter: grayscale(1) blur(2.5px) brightness(0.5);
+  animation: roomDeep 1.5s ease both;
+}
+
+@keyframes roomDeep {
+  from { opacity: 0; }
+  to   { opacity: 0.9; }
+}
+
+/* ── WORK stage: media as hero while the nav is miniature ─── */
+
+.mediaStage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* the one-word navigation + project copy */
+.workHead {
+  position: absolute;
+  left: clamp(28px, 7vw, 110px);
+  top: clamp(72px, 13vh, 130px);
+  max-width: 30ch;
+  pointer-events: auto;
+  z-index: 60;
+}
+
+.navWord {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: #fff;
+  cursor: pointer;
+  animation: fcopyIn 0.8s ease 0.55s both;
+}
+
+.navWordHint {
+  display: inline-block;
+  font-size: 18px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.45);
+  margin-right: 12px;
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.navWord:hover .navWordHint {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.workHead p {
+  margin-top: 14px;
+  font-size: 12.5px;
+  line-height: 20px;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.55);
+  animation: fcopyIn 0.9s ease 0.75s both;
+}
+
+.viewSwitch {
+  display: flex;
+  gap: 7px;
+  margin-top: 18px;
+  animation: fcopyIn 0.9s ease 0.9s both;
+}
+
+.viewSwitch button {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 2px;
+  color: rgba(255, 255, 255, 0.4);
+  font: inherit;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 5px 9px;
+  cursor: pointer;
+  transition: color 0.25s, border-color 0.25s, background 0.25s;
+}
+
+.viewSwitch button:hover { color: #fff; border-color: rgba(255, 255, 255, 0.45); }
+.viewSwitch button.on { color: #0b0b0c; background: #eaeaea; border-color: #eaeaea; }
+
+/* STRIP — one continuous filmstrip, drag to throw */
+.strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-44%);
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 0 clamp(28px, 24vw, 360px) 0 clamp(28px, 26vw, 420px);
+  overflow-x: auto;
+  scrollbar-width: none;
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.strip::-webkit-scrollbar { display: none; }
+.strip:active { cursor: grabbing; }
+
+.sFrame {
+  flex: 0 0 auto;
+  height: 56vh;
+  animation: fcopyIn 0.8s ease both;
+}
+
+.sFrame img,
+.sFrame video {
+  height: 100%;
+  width: auto;
+  display: block;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.03);
+  user-select: none;
+}
+
+/* DECK — a physical pile; the top frame deals to the back */
+.deck {
+  position: absolute;
+  left: 58%;
+  top: 47%;
+  width: 0;
+  height: 0;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.dCard {
+  position: absolute;
+  width: min(34vw, 500px);
+  height: min(42vw, 620px);
+  max-height: 66vh;
+  overflow: hidden;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.6);
+  transition: transform 0.55s cubic-bezier(0.3, 1.08, 0.35, 1), filter 0.55s ease;
+  animation: fcopyIn 0.8s ease both;
+}
+
+.dCard.dealt {
+  transform: translate(30%, -58%) rotate(10deg) !important;
+  opacity: 0;
+  transition: transform 0.48s cubic-bezier(0.5, 0, 0.6, 1), opacity 0.48s ease;
+}
+
+.dCard img,
+.dCard video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.03);
+  user-select: none;
+}
+
+.deckHint {
+  position: absolute;
+  left: 50%;
+  top: 42vh;
+  transform: translateX(-50%);
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* FIELD — the project as a room you roam by dragging */
+.fieldStage {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  cursor: grab;
+  overflow: hidden;
+}
+
+.fieldStage:active { cursor: grabbing; }
+
+.fieldPlane {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.fFrame {
+  position: absolute;
+  overflow: hidden;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+  animation: fcopyIn 0.9s ease both;
+}
+
+.fFrame img,
+.fFrame video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.03);
+  user-select: none;
+}
+
+.fieldStage .deckHint { top: auto; bottom: 7vh; }
+
+/* the collage — frames spawning out of one another */
+.collage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cItem {
+  position: absolute;
+  transform: translate(-50%, -50%) rotate(var(--rot));
+  pointer-events: auto;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+  animation: spawn 0.9s cubic-bezier(0.3, 1.1, 0.35, 1) both;
+  transition: transform 0.4s cubic-bezier(0.34, 1.4, 0.5, 1), box-shadow 0.4s ease;
+}
+
+.cItem:hover {
+  transform: translate(-50%, -50%) rotate(0deg) scale(1.04);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.7);
+}
+
+.cItem img,
+.cItem video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.03);
+}
+
+@keyframes spawn {
+  from {
+    opacity: 0;
+    /* born at the previous frame's heart, pulled out from under it */
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+      rotate(0deg) scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--rot)) scale(1);
+  }
+}
+
+/* ── the physics panel — direct control over the feel ─────── */
+
+.tune {
+  position: absolute;
+  right: 24px;
+  bottom: 64px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.tuneHead {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 2px;
+  color: rgba(255, 255, 255, 0.55);
+  font: inherit;
+  letter-spacing: 0.2em;
+  padding: 6px 11px;
+  cursor: pointer;
+}
+
+.tuneHead:hover { color: #fff; border-color: rgba(255, 255, 255, 0.45); }
+
+.tuneBody {
+  margin-top: 8px;
+  padding: 14px 16px;
+  width: 250px;
+  background: rgba(14, 15, 18, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  backdrop-filter: blur(8px);
+}
+
+.tuneRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.tuneLabel { width: 72px; flex-shrink: 0; }
+.tuneVal { width: 38px; text-align: right; color: rgba(255, 255, 255, 0.85); font-variant-numeric: tabular-nums; }
+
+.tune input[type='range'] {
+  flex: 1;
+  appearance: none;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 1px;
+  cursor: pointer;
+}
+
+.tune input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #eaeaea;
+}
+
+.tuneReset {
+  margin-top: 10px;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 2px;
+  color: rgba(255, 255, 255, 0.4);
+  font: inherit;
+  letter-spacing: 0.2em;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.tuneReset:hover { color: #fff; border-color: rgba(255, 255, 255, 0.45); }
+
+.chrome {
+  position: absolute;
+  /* above the svg layer — without this the invisible svg canvas
+     swallows clicks meant for the mode switcher */
+  z-index: 3;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 28px 36px;
+  pointer-events: none;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.chrome.top {
+  top: 0;
+}
+
+.chrome.bottom {
+  bottom: 0;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.switch { display: flex; gap: 8px; pointer-events: auto; }
+
+.switch button {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 2px;
+  color: rgba(255, 255, 255, 0.4);
+  font: inherit;
+  letter-spacing: 0.2em;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: color 0.25s, border-color 0.25s, background 0.25s;
+}
+
+.switch button:hover { color: #fff; border-color: rgba(255, 255, 255, 0.45); }
+.switch button.on { color: #0b0b0c; background: #eaeaea; border-color: #eaeaea; }
+
+/* ── STRUCTURE / IMAGERY: copy riding the focus node ──────── */
+
+.graphWrap {
+  position: absolute;
+  inset: 0;
+}
+
+/* the type plane — svg + copy share it so the imagery-mode camera
+   dolly moves them together, in front of the image field */
+.typePlane {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.nodeCopy {
+  position: absolute;
+  z-index: 2;
+  max-width: 40ch;
+  font-size: 13px;
+  line-height: 21px;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+  animation: copyIn 0.9s ease 0.25s both;
+}
+
+@keyframes copyIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── DEPTH: imagery as attention ──────────────────────────── */
+
+.stagefield {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.stagefield img {
+  position: absolute;
+  object-fit: cover;
+  transform: translate(-50%, -50%);
+}
+
+/* mouse parallax: the room drifts against the type plane */
+.stagefield,
+.typePlane {
+  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.3, 1);
+  will-change: transform;
+}
+
+/* click a leaf → the image arrives and settles as the ENVIRONMENT —
+   you are inside the work; the type reads on top of the room */
+.stagefield .roomImg {
+  left: 50%;
+  top: 46%;
+  width: min(74vw, 1060px);
+  height: 80vh;
+  animation: arrive 1.3s cubic-bezier(0.3, 1.04, 0.35, 1) both;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    filter: grayscale(1) blur(20px) brightness(0.35);
+    transform: translate(-50%, -47%) scale(0.94);
+  }
+  to {
+    opacity: 0.95;
+    filter: grayscale(1) blur(2px) brightness(0.5);
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* rooms you've left shrink to the periphery — spatial memory */
+.stagefield .ghostImg {
+  top: 44%;
+  width: min(20vw, 280px);
+  height: 36vh;
+  animation: ghostIn 1.2s ease both;
+}
+
+@keyframes ghostIn {
+  from { opacity: 0; filter: grayscale(1) blur(5px) brightness(0.5); }
+  to   { opacity: 0.1; filter: grayscale(1) blur(8px) brightness(0.38); }
+}
+
+/* ── IMAGERY: stills in real Z space, behind the type ─────── */
+
+.zspace {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* the camera — translateZ planes scale + parallax against this */
+  perspective: 1100px;
+  perspective-origin: 50% 45%;
+}
+
+.zspace img {
+  position: absolute;
+  object-fit: cover;
+}
+
+/* the hero — a project's still arriving from depth: it swings in off
+   axis, the frame wipes open, then it keeps living with a slow creep */
+.zspace .heroWrap {
+  position: absolute;
+  width: min(42vw, 600px);
+  height: 68vh;
+  overflow: hidden;
+  transform-origin: left center;
+  animation: heroIn 1.1s cubic-bezier(0.3, 1.12, 0.35, 1) both;
+}
+
+@keyframes heroIn {
+  from {
+    opacity: 0;
+    clip-path: inset(0 78% 0 0);
+    transform: translate(0, -44%) translateZ(-720px) rotateY(-18deg);
+  }
+  55% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0);
+    transform: translate(0, -44%) translateZ(-24px) rotateY(0deg);
+  }
+}
+
+.zspace .heroWrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.04);
+  animation: heroLive 14s ease-in-out 1.1s infinite alternate;
+}
+
+@keyframes heroLive {
+  from { transform: scale(1); }
+  to   { transform: scale(1.08) translate(-1.6%, -1.2%); }
+}
+
+.wordmark {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+  letter-spacing: 0.4em;
+}
+
+.trail {
+  font-variant-numeric: tabular-nums;
+}
