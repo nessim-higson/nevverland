@@ -102,6 +102,7 @@ export default function App() {
             sim={sim}
             activeId={activeId}
             width={dims.width}
+            height={dims.height}
             onNavigate={navigate}
           />
         ) : mode === 'rings' ? (

@@ -49,6 +49,38 @@ export default function Controls({ onTune }) {
       {open && (
         <div className="tuneBody">
           <div className="tuneRow tuneVariants">
+            <span className="tuneLabel">Threads</span>
+            {[true, false].map((v) => (
+              <button
+                key={String(v)}
+                className={P.THREADS === v ? 'on' : ''}
+                onClick={() => {
+                  P.THREADS = v
+                  setV((x) => x + 1)
+                  onTune()
+                }}
+              >
+                {v ? 'on' : 'off'}
+              </button>
+            ))}
+          </div>
+          <div className="tuneRow tuneVariants">
+            <span className="tuneLabel">Effect</span>
+            {['lens', 'wave', 'rgb'].map((v) => (
+              <button
+                key={v}
+                className={P.FX === v ? 'on' : ''}
+                onClick={() => {
+                  P.FX = v
+                  setV((x) => x + 1)
+                  onTune()
+                }}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          <div className="tuneRow tuneVariants">
             <span className="tuneLabel">Emission</span>
             {['arc', 'orbit', 'fan', 'tide'].map((v) => (
               <button

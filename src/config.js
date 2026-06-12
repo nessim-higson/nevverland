@@ -59,6 +59,16 @@ export const PHYSICS = {
   SPACING: 12,    // extra collision padding between labels — the
                   // anti-overlap dial (0 = touching allowed)
 
+  // Connecting threads in the line-drawing modes (organic/orbs/depth) —
+  // off shows the same living cascade held together by physics alone.
+  THREADS: true,
+
+  // FOCAL work gallery (three.js) — the shader effect on the frames.
+  //   lens — barrel distortion + chromatic aberration, driven by velocity
+  //   wave — the frame ripples like cloth as it moves
+  //   rgb  — channel-split glitch on motion
+  FX: 'lens',
+
   // FOCAL: how a project's media emits from its word.
   //   arc   — frames ring the word on a stable arc
   //   orbit — the ring slowly revolves around the word
@@ -94,12 +104,14 @@ export const CASCADE = {
 
 // Type sizes / weights / tracking per role — Helvetica Neue, sentence
 // case. Tracking tightens as size grows, the classic optical rule.
+// Steeper generational contrast: the focus towers, children read as a
+// clear second tier, context drops away fast.
 export const TYPE_ROLES = {
-  active:  { fs: 42, opacity: 1.0, weight: 700, ls: '-0.015em' },
-  child:   { fs: 17, opacity: 0.92, weight: 400, ls: '0.01em' },
-  parent:  { fs: 13.5, opacity: 0.7, weight: 400, ls: '0.02em' },
-  sibling: { fs: 12.5, opacity: 0.5, weight: 400, ls: '0.02em' },
-  distant: { fs: 10.5, opacity: 0.28, weight: 400, ls: '0.03em' },
+  active:  { fs: 46, opacity: 1.0, weight: 700, ls: '-0.015em' },
+  child:   { fs: 20, opacity: 0.95, weight: 500, ls: '0.005em' },
+  parent:  { fs: 15, opacity: 0.65, weight: 400, ls: '0.02em' },
+  sibling: { fs: 11.5, opacity: 0.45, weight: 400, ls: '0.025em' },
+  distant: { fs: 9, opacity: 0.25, weight: 400, ls: '0.03em' },
 }
 
 // Rough sentence-case label width, for hit areas and column indents.

@@ -30,9 +30,12 @@ const HERO_DY = -30
 // the softer it renders — background type genuinely reads as behind.
 const ROLE_BLUR = { trail: 1.2, parent: 1.2, distant: 2, sibling: 0.7 }
 
-function TypeNodeView({ node, role, hovered, depthCue, width, onHover, onClick }) {
+function TypeNodeView({ node, role, hovered, depthCue, width, dist = 0, onHover, onClick }) {
   const t = TYPE_ROLES[role]
-  const fs = fsFor(role, node.label, width)
+  // ancestors step down with generational distance — parent reads
+  // clearly larger than grandparent, grandparent than root
+  let fs = fsFor(role, node.label, width)
+  if (role === 'parent' && dist > 1) fs = Math.max(10.5, fs - (dist - 1) * 3.5)
   const w = labelWidth(node.label, fs)
   const blur = depthCue && !hovered ? ROLE_BLUR[role] || 0 : 0
 
@@ -220,7 +223,10 @@ export default function Graph({ width, height, sim, activeId, mode, onNavigate }
     }
   }, [mode])
 
-  const showLines = mode === 'type' || mode === 'orbs' || mode === 'depth'
+  // threads are a live dial — organic held together by physics alone
+  // is its own version worth looking at
+  const showLines =
+    (mode === 'type' || mode === 'orbs' || mode === 'depth') && P.THREADS
   const showCopy = mode === 'structure' || mode === 'imagery' || mode === 'depth'
   const showImages = mode === 'imagery'
   const depthCue = mode === 'structure' || mode === 'imagery' || mode === 'depth'
@@ -311,6 +317,7 @@ export default function Graph({ width, height, sim, activeId, mode, onNavigate }
             hovered={hoverId === n.id}
             depthCue={depthCue}
             width={width}
+            dist={Math.max(0, active.depth - n.depth)}
             onHover={setHoverId}
             onClick={onNavigate}
           />

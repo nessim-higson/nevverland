@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { PHYSICS as P, fsFor } from './config'
+import Gallery3D from './Gallery3D'
 
 // Media emission: at a project, the frames EMIT from the focus word —
 // fanned on an arc around it (skipping the bottom, where the copy
@@ -75,7 +76,7 @@ function emitSlots(n, full, variant, t) {
 const STEP_BACK = 410 // px of z per receded level
 const STEP_FWD = 110  // children float just in front of the focal plane
 
-export default function FocusSpace({ sim, activeId, width, onNavigate }) {
+export default function FocusSpace({ sim, activeId, width, height, onNavigate }) {
   const { visibleNodes, roles, byId } = sim
   const spaceRef = useRef(null)
   const [hoverId, setHoverId] = useState(null)
@@ -147,15 +148,17 @@ export default function FocusSpace({ sim, activeId, width, onNavigate }) {
 
   return (
     <>
-      {/* full screen: the chosen frame floods the stage; the nav stays */}
+      {/* the WORK gallery: the strip of frames in WebGL, shader bending
+          with throw velocity; the nav stays drawn above it */}
       {full && (
-        <div key={`full-${activeId}-${fullI}`} className="fullBleed">
-          {full.type === 'video' ? (
-            <video src={full.src} autoPlay muted loop playsInline />
-          ) : (
-            <img src={full.src} alt="" />
-          )}
-        </div>
+        <Gallery3D
+          key={`gl-${activeId}`}
+          media={media}
+          startIndex={fullI}
+          width={width}
+          height={height ?? window.innerHeight}
+          onIndex={(i) => setFullI(i)}
+        />
       )}
 
     <div className="focusSpace" ref={spaceRef}>
