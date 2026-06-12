@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import Graph from './Graph'
 import DustMode from './DustMode'
 import FocusSpace from './FocusSpace'
+import RingsSpace from './RingsSpace'
+import WeightSpace from './WeightSpace'
 import Controls from './Controls'
 import { useSimulation } from './useSimulation'
 import { ancestorsOf } from './layout'
@@ -25,6 +27,8 @@ const MODES = [
   { key: 'depth', label: '05 DEPTH' },
   { key: 'dust', label: '06 DUST' },
   { key: 'focus', label: '07 FOCAL' },
+  { key: 'rings', label: '08 RINGS' },
+  { key: 'weight', label: '09 WEIGHT' },
 ]
 
 export default function App() {
@@ -106,6 +110,21 @@ export default function App() {
           />
         ) : mode === 'focus' ? (
           <FocusSpace
+            sim={sim}
+            activeId={activeId}
+            width={dims.width}
+            onNavigate={navigate}
+          />
+        ) : mode === 'rings' ? (
+          <RingsSpace
+            sim={sim}
+            activeId={activeId}
+            width={dims.width}
+            height={dims.height}
+            onNavigate={navigate}
+          />
+        ) : mode === 'weight' ? (
+          <WeightSpace
             sim={sim}
             activeId={activeId}
             width={dims.width}

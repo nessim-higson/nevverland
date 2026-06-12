@@ -33,6 +33,19 @@ function emitSlots(n, full, variant, t) {
       z: -110 - i * 175,
     }))
   }
+  if (variant === 'tide') {
+    // a slow current: frames drift past the word in lanes at different
+    // depths, wrapping around — the work flows while the name holds
+    const LOOP = 1280
+    return Array.from({ length: n }, (_, i) => {
+      const ox = ((t * 42 + i * (LOOP / n)) % LOOP) - LOOP / 2
+      return {
+        ox,
+        oy: (i % 2 ? -1 : 1) * (105 + (i % 3) * 38) + Math.sin(t * 0.7 + i) * 14,
+        z: -120 - (i % 3) * 150,
+      }
+    })
+  }
   // orbit — full ellipse, revolving
   const spin = (t * 9 * Math.PI) / 180
   return Array.from({ length: n }, (_, i) => {
@@ -76,12 +89,12 @@ export default function FocusSpace({ sim, activeId, width, onNavigate }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // orbit revolves even when the simulation itself is becalmed
+  // orbit and tide keep moving even when the simulation is becalmed
   const [, setSpin] = useState(0)
   useEffect(() => {
     let raf
     const loop = () => {
-      if (P.EMIT === 'orbit') setSpin((s) => s + 1)
+      if (P.EMIT === 'orbit' || P.EMIT === 'tide') setSpin((s) => s + 1)
       raf = requestAnimationFrame(loop)
     }
     raf = requestAnimationFrame(loop)
@@ -165,7 +178,7 @@ export default function FocusSpace({ sim, activeId, width, onNavigate }) {
             return (
               <div
                 key={`${activeId}-em-${i}`}
-                className={`eFrame ${fullI === i ? 'current' : ''}`}
+                className={`eFrame ${fullI === i ? 'current' : ''} ${P.EMIT === 'tide' && fullI == null ? 'flow' : ''}`}
                 style={{
                   width: w,
                   height: h,

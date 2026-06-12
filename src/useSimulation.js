@@ -346,7 +346,8 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
     // imagery), so they share the 'type' force configuration. FOCAL
     // uses the centered ring physics (like orbs): focus at center,
     // children orbiting, ancestors lifted — depth happens at render.
-    const phys = mode === 'orbs' || mode === 'focus' ? 'orbs' : 'type'
+    const centered = mode === 'focus' || mode === 'rings' || mode === 'weight'
+    const phys = mode === 'orbs' || centered ? 'orbs' : 'type'
 
     const cx = width / 2
     const cy = height / 2
@@ -433,8 +434,8 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
     sim.force(
       'collide',
       forceCollide((n) =>
-        mode === 'focus'
-          ? // focal mode renders text labels — guard their width
+        centered
+          ? // these modes render text labels — guard their width
             labelWidth(n.label, fsFor(roleOf(n))) * 0.42 + 6 + P.SPACING * 0.5
           : collideRadius(n, roles, phys) + (phys === 'type' ? P.SPACING * 0.25 : 0)
       )
@@ -502,14 +503,14 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
 
       sim.force('ring', cascadeForce(specs, stacked ? Math.max(C.STRENGTH, 0.5) : C.STRENGTH))
     } else {
-      // Children bloom onto a ring around the (moving) focus. FOCAL
-      // needs a wider ring — its labels are text, not dots.
+      // Children bloom onto a ring around the (moving) focus. The
+      // centered text modes need a wider ring — labels, not dots.
       sim.force(
         'ring',
         childRingForce(
           () => byId.get(activeId),
           () => visible.filter((n) => roleOf(n) === 'child'),
-          mode === 'focus' ? 1.5 : 1
+          centered ? 1.5 : 1
         )
       )
     }

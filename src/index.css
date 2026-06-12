@@ -217,6 +217,12 @@ body {
 }
 
 .eFrame:hover { box-shadow: 0 22px 70px rgba(0, 0, 0, 0.75); }
+
+/* tide moves by the frame-clock, not by eased transitions — otherwise
+   the wrap-around jump smears across the word */
+.eFrame.flow {
+  transition: box-shadow 0.4s ease, outline-color 0.3s ease;
+}
 .eFrame.current { outline-color: rgba(255, 255, 255, 0.9); }
 
 .eFrame img,
@@ -530,6 +536,69 @@ body {
   }
 }
 
+/* ── RINGS: the corridor head-on — your past encircles you ── */
+
+.ringsSpace,
+.weightSpace {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.rlabel,
+.wlabel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-block;
+  color: #dededb;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    font-size 0.7s cubic-bezier(0.3, 1.05, 0.35, 1),
+    font-weight 0.35s ease,
+    opacity 0.5s ease,
+    color 0.3s ease;
+}
+
+.rlabel.hot { color: #fff; }
+.rlabel.activeL,
+.wlabel.activeL { color: #fff; letter-spacing: -0.015em; }
+
+.ringsRoom {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) blur(2px) brightness(0.42);
+  animation: roomDeep 1.4s ease both;
+}
+
+/* the sonar pulse — navigation felt from the center */
+.pulse {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: sonar 1.6s cubic-bezier(0.2, 0.6, 0.3, 1) both;
+}
+
+@keyframes sonar {
+  from {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(80);
+  }
+}
+
 /* ── the physics panel — direct control over the feel ─────── */
 
 .tune {
@@ -663,8 +732,9 @@ body {
   border-radius: 2px;
   color: rgba(255, 255, 255, 0.4);
   font: inherit;
-  letter-spacing: 0.2em;
-  padding: 6px 10px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  padding: 5px 7px;
   cursor: pointer;
   transition: color 0.25s, border-color 0.25s, background 0.25s;
 }

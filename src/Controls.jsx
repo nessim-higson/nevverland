@@ -50,7 +50,7 @@ export default function Controls({ onTune }) {
         <div className="tuneBody">
           <div className="tuneRow tuneVariants">
             <span className="tuneLabel">Emission</span>
-            {['arc', 'orbit', 'fan'].map((v) => (
+            {['arc', 'orbit', 'fan', 'tide'].map((v) => (
               <button
                 key={v}
                 className={P.EMIT === v ? 'on' : ''}
