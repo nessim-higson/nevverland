@@ -423,11 +423,16 @@ body {
 
 .flabel.hot { color: #ffffff; }
 .flabel.activeL { font-weight: 700; color: #ffffff; letter-spacing: -0.015em; }
-/* the way-back: the level you came from, almost dissolved into space */
+/* the way-back: the level you came from — the door back, behind you */
 .flabel.wayback {
   font-weight: 400;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.flabel.wayback .backArrow {
+  font-weight: 300;
+  opacity: 0.7;
 }
 
 .fcopy {

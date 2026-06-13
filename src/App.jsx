@@ -168,7 +168,7 @@ export default function App() {
       </header>
       <footer className="chrome bottom">
         <span className="hint">
-          CLICK A NODE TO NAVIGATE — CLICK THE FOCUS TO STEP BACK — H FOR CLEAN VIEW
+          CLICK TO GO DEEPER — CLICK THE SPACE TO GO BACK — H FOR CLEAN VIEW
         </span>
         <span className="switch">
           {MODES.map((m) => (

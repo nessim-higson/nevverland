@@ -147,6 +147,17 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
     onNavigate(n)
   }
 
+  // THE SPATIAL LAW: click a node to go deeper, click the VOID to back
+  // out one level (the world pulls back, the parent rushes to center).
+  const onVoid = (e) => {
+    if (e.target.closest('.flabel, .eFrame, .froomImg')) return // hit a node
+    if (full) {
+      setFullI(null)
+      return
+    }
+    if (active.parentId) onNavigate(byId.get(active.parentId))
+  }
+
   return (
     <>
       {/* the WORK gallery: the strip of frames in WebGL, shader bending
@@ -162,7 +173,12 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
         />
       )}
 
-    <div className="focusSpace" ref={spaceRef}>
+    <div
+      className="focusSpace"
+      ref={spaceRef}
+      onClick={onVoid}
+      style={{ pointerEvents: full ? 'none' : 'auto' }}
+    >
       {/* the end of the corridor: a leaf's image, deepest plane */}
       {room && (
         <img key={`room-${room.id}`} className="froomImg" src={room.img} alt="" />
@@ -217,10 +233,11 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
 
         let z, blur, opacity
         if (isWayBack) {
-          // the level you came from, receded to a ghost far behind
-          z = -STEP_BACK * 1.15
-          blur = 3
-          opacity = hoverId === n.id ? 0.5 : 0.16
+          // the level you came from — receded behind you, but legible
+          // enough to read as the door back; brightens on hover
+          z = -STEP_BACK * 1.05
+          blur = hoverId === n.id ? 0 : 1.5
+          opacity = hoverId === n.id ? 0.85 : 0.34
         } else if (role === 'active') {
           z = 0
           blur = 0
@@ -254,6 +271,7 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
                 onMouseLeave={() => setHoverId(null)}
                 onClick={() => clickNode(n)}
               >
+                {isWayBack && <span className="backArrow">↑ </span>}
                 {n.label}
               </span>
             </div>
