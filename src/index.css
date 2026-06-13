@@ -169,7 +169,7 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  max-width: 42ch;
+  max-width: min(42ch, 86vw);
   font-size: 13px;
   line-height: 22px;
   letter-spacing: 0.01em;
@@ -315,7 +315,7 @@ body {
   position: absolute;
   left: clamp(28px, 7vw, 110px);
   top: clamp(72px, 13vh, 130px);
-  max-width: 30ch;
+  max-width: min(30ch, 84vw);
   pointer-events: auto;
   z-index: 60;
 }
@@ -772,7 +772,7 @@ body {
 .nodeCopy {
   position: absolute;
   z-index: 2;
-  max-width: 38ch;
+  max-width: min(38ch, 86vw);
   font-size: 13px;
   line-height: 22px;
   letter-spacing: 0.01em;
@@ -938,4 +938,73 @@ body {
 .stage .chrome,
 .stage .tune {
   transition: opacity 0.5s ease;
+}
+
+/* ── mobile / narrow viewports ────────────────────────────── */
+@media (max-width: 680px) {
+  /* header + breadcrumb shrink and tighten */
+  .chrome {
+    padding: 16px 18px;
+    font-size: 8.5px;
+    letter-spacing: 0.14em;
+  }
+  .wordmark {
+    letter-spacing: 0.22em;
+  }
+
+  /* the footer becomes a single scrollable rail of mode chips; the
+     verbose hint is dropped (it wrapped into a tall column) */
+  .chrome.bottom {
+    padding: 0;
+    bottom: 0;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .chrome.bottom .hint {
+    display: none;
+  }
+  .switch {
+    width: 100%;
+    gap: 0;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    background: rgba(10, 11, 13, 0.85);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .switch::-webkit-scrollbar {
+    display: none;
+  }
+  .switch button {
+    flex: 0 0 auto;
+    border: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0;
+    padding: 13px 14px;
+    font-size: 9px;
+  }
+
+  /* the physics panel becomes a bottom sheet — full width, capped
+     height, scrollable; starts collapsed (Controls sets open=false) */
+  .tune {
+    left: 12px;
+    right: 12px;
+    bottom: 52px;
+  }
+  .tuneBody {
+    width: auto;
+    max-height: 52vh;
+    overflow-y: auto;
+  }
+  .tuneRow input[type='range'] {
+    min-width: 0;
+  }
+
+  /* media collage / gallery captions sit clear of the bottom rail */
+  .mediaFrame,
+  .glStage {
+    bottom: 56px;
+  }
 }

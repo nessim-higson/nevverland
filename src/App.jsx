@@ -7,6 +7,13 @@ import Controls from './Controls'
 import { useSimulation } from './useSimulation'
 import { ancestorsOf } from './layout'
 import { NAV } from './data'
+import { PHYSICS } from './config'
+
+// Shrink type + geometry together as the viewport narrows, so the whole
+// spatial composition fits a phone. ~1 above 1080px, ~0.5 on a 375 phone.
+function viewportScale(w) {
+  return Math.max(0.5, Math.min(1, (w - 80) / 1000))
+}
 
 // Which node has focus when the page loads (any id from data.js).
 const INITIAL_FOCUS = NAV.id
@@ -53,9 +60,11 @@ export default function App() {
   useEffect(() => {
     const el = containerRef.current
     const rect = el.getBoundingClientRect()
+    PHYSICS.VIEWPORT_SCALE = viewportScale(rect.width)
     setDims({ width: rect.width, height: rect.height })
     const ro = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect
+      PHYSICS.VIEWPORT_SCALE = viewportScale(width)
       setDims({ width, height })
     })
     ro.observe(el)

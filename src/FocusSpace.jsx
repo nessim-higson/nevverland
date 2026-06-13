@@ -17,10 +17,10 @@ const CHIP_R = 150 // ring radius while an image is full screen
 //   arc   — stable arc over the word, skipping the copy below
 //   orbit — a full ring slowly revolving around the word
 //   fan   — frames trailing away into the corridor's depth
-function emitSlots(n, full, variant, t) {
+function emitSlots(n, full, variant, t, vs = 1) {
   // chips always settle onto the stable arc — image nav stays still
   if (full || variant === 'arc') {
-    const r = full ? CHIP_R : EMIT_R
+    const r = (full ? CHIP_R : EMIT_R) * vs
     return Array.from({ length: n }, (_, i) => {
       const a =
         ((ARC_START + (n > 1 ? (i * ARC_SPAN) / (n - 1) : ARC_SPAN / 2)) * Math.PI) / 180
@@ -29,20 +29,20 @@ function emitSlots(n, full, variant, t) {
   }
   if (variant === 'fan') {
     return Array.from({ length: n }, (_, i) => ({
-      ox: 240 + i * 130,
-      oy: -36 - i * 38,
+      ox: (240 + i * 130) * vs,
+      oy: (-36 - i * 38) * vs,
       z: -110 - i * 175,
     }))
   }
   if (variant === 'tide') {
     // a slow current: frames drift past the word in lanes at different
     // depths, wrapping around — the work flows while the name holds
-    const LOOP = 1280
+    const LOOP = 1280 * vs
     return Array.from({ length: n }, (_, i) => {
       const ox = ((t * 42 + i * (LOOP / n)) % LOOP) - LOOP / 2
       return {
         ox,
-        oy: (i % 2 ? -1 : 1) * (105 + (i % 3) * 38) + Math.sin(t * 0.7 + i) * 14,
+        oy: ((i % 2 ? -1 : 1) * (105 + (i % 3) * 38) + Math.sin(t * 0.7 + i) * 14) * vs,
         z: -120 - (i % 3) * 150,
       }
     })
@@ -51,7 +51,7 @@ function emitSlots(n, full, variant, t) {
   const spin = (t * 9 * Math.PI) / 180
   return Array.from({ length: n }, (_, i) => {
     const a = (i / n) * Math.PI * 2 - Math.PI / 2 + spin
-    return { ox: Math.cos(a) * EMIT_R * 1.3, oy: Math.sin(a) * EMIT_R * 0.85, z: -150 }
+    return { ox: Math.cos(a) * EMIT_R * 1.3 * vs, oy: Math.sin(a) * EMIT_R * 0.85 * vs, z: -150 }
   })
 }
 
@@ -120,8 +120,9 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
   const media = isLeaf && active.media ? active.media : null
   // media-less leaves keep the corridor-end room image
   const room = !media && active?.img && isLeaf ? active : null
+  const vs = P.VIEWPORT_SCALE
   const slots = media
-    ? emitSlots(media.length, fullI != null, P.EMIT, performance.now() / 1000)
+    ? emitSlots(media.length, fullI != null, P.EMIT, performance.now() / 1000, vs)
     : []
   const full = media && fullI != null ? media[fullI] : null
 
@@ -176,8 +177,8 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
           {media.map((m, i) => {
             const s = slots[i]
             const big = i % 2 === 0
-            const w = full ? 64 : big ? 200 : 160
-            const h = full ? 64 : w * (big ? 1.24 : 0.78)
+            const w = (full ? 64 : big ? 200 : 160) * vs
+            const h = (full ? 64 : (big ? 200 : 160) * (big ? 1.24 : 0.78)) * vs
             return (
               <div
                 key={`${activeId}-em-${i}`}

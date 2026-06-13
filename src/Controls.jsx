@@ -25,7 +25,11 @@ const PARAMS = [
 const DEFAULTS = PARAMS.map((p) => p.obj[p.key])
 
 export default function Controls({ onTune }) {
-  const [open, setOpen] = useState(true)
+  // collapsed by default on phones — the panel is a power feature and
+  // would otherwise cover the whole small screen
+  const [open, setOpen] = useState(
+    typeof window === 'undefined' ? true : window.innerWidth > 680
+  )
   // local mirror purely to re-render slider labels
   const [, setV] = useState(0)
 

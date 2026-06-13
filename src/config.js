@@ -56,6 +56,11 @@ export const PHYSICS = {
   // larger values make the focus dramatically dominant.
   TYPE_SCALE: 1.5,
 
+  // Responsive multiplier set from the viewport width (App resize) —
+  // shrinks type AND geometry together on small screens so the whole
+  // spatial composition fits a phone. 1 on desktop.
+  VIEWPORT_SCALE: 1,
+
   SPACING: 12,    // extra collision padding between labels — the
                   // anti-overlap dial (0 = touching allowed)
 
@@ -127,14 +132,16 @@ export const labelWidth = (label, fs) => label.length * fs * 0.58
 export function fsFor(role, label, width) {
   const base = TYPE_ROLES[role].fs
   const s = PHYSICS.TYPE_SCALE
+  const vs = PHYSICS.VIEWPORT_SCALE
   let f =
     role === 'active'
       ? base * s
       : role === 'child'
         ? base * (1 + (s - 1) * 0.4)
         : base * (1 + (s - 1) * 0.15)
+  f *= vs
   if (role === 'active' && label && width) {
-    f = Math.min(f, (width * 0.8) / (label.length * 0.58))
+    f = Math.min(f, (width * 0.82) / (label.length * 0.58))
   }
   return f
 }

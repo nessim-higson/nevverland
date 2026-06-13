@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { fsFor } from './config'
+import { useState } from 'react'
+import { PHYSICS as P, fsFor } from './config'
 
 // ─────────────────────────────────────────────────────────────
 // 08 RINGS — the corridor seen HEAD-ON.
@@ -20,6 +20,7 @@ const RING_STEP = 165 // radius added per level of distance
 export default function RingsSpace({ sim, activeId, width, height, onNavigate }) {
   const { visibleNodes, roles, byId } = sim
   const [hoverId, setHoverId] = useState(null)
+  const STEP = RING_STEP * P.VIEWPORT_SCALE // rings tighten on small screens
   const cx = width / 2
   const cy = height / 2 - 20
 
@@ -65,17 +66,17 @@ export default function RingsSpace({ sim, activeId, width, height, onNavigate })
           x = cx
           y = cy
         } else if (role === 'child') {
-          ;({ x, y } = place(n, RING_STEP * 1.32))
+          ;({ x, y } = place(n, STEP * 1.32))
           opacity = 0.9
         } else if (role === 'sibling') {
-          ;({ x, y } = place(n, RING_STEP * 2.15))
+          ;({ x, y } = place(n, STEP * 2.15))
           opacity = 0.42
         } else if (role === 'parent') {
-          ;({ x, y } = place(n, RING_STEP * (1 + dist) * 1.45))
+          ;({ x, y } = place(n, STEP * (1 + dist) * 1.45))
           opacity = Math.max(0.22, 0.55 - dist * 0.15)
         } else {
           // distant branches share their level's outer ring
-          ;({ x, y } = place(n, RING_STEP * 2.9))
+          ;({ x, y } = place(n, STEP * 2.9))
           opacity = 0.2
         }
 

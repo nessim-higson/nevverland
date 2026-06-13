@@ -50,7 +50,7 @@ function childRingForce(getActive, getChildren, ringScale = 1) {
   function force(alpha) {
     const a = getActive()
     if (!a) return
-    const ring = P.CHILD_RING * ringScale
+    const ring = P.CHILD_RING * ringScale * P.VIEWPORT_SCALE
     for (const n of getChildren()) {
       let dx = n.x - a.x
       let dy = n.y - a.y
@@ -133,13 +133,16 @@ function buildCascadeSpecs(activeId, visible, roles, byId, copyClear = 0) {
   const ancestors = ancestorsOf(activeId, byId) // [parent, grandparent, …]
   const specs = []
 
-  // The children's indent must clear the active label, however long it is.
-  const colW = Math.max(C.COL_W, labelWidth(active.label, fsFor('active')) + 70)
+  const vs = P.VIEWPORT_SCALE
+  // The children's indent must clear the active label; on narrow screens
+  // the indent tightens so the column stacks nearly under the focus.
+  const colW = Math.max(C.COL_W * vs * 0.78, labelWidth(active.label, fsFor('active')) + 30 * vs)
+  const breadStep = C.BREAD_STEP * vs
 
-  // row rhythm scales with the (slider-driven) type sizes, so larger
-  // type never outgrows its gaps and starts colliding into zig-zags
-  const rowGap = Math.max(C.GAP, fsFor('child') * 1.9)
-  const distGap = Math.max(C.GAP_DISTANT, fsFor('distant') * 2.4)
+  // row rhythm must always exceed twice the collision radius
+  // (fsFor*0.8) or rows fight the collide force and scatter
+  const rowGap = Math.max(C.GAP * vs, fsFor('child') * 1.7 + 6)
+  const distGap = Math.max(C.GAP_DISTANT * vs, fsFor('distant') * 2 + 8)
 
   for (const n of visible) {
     const role = roles.get(n.id)
@@ -170,8 +173,8 @@ function buildCascadeSpecs(activeId, visible, roles, byId, copyClear = 0) {
       specs.push({
         node: n,
         anchor: active,
-        dx: -C.BREAD_STEP * d,
-        dy: -C.ROW_LIFT * d,
+        dx: -breadStep * d,
+        dy: -C.ROW_LIFT * vs * d,
       })
     } else if (role === 'distant') {
       // Collapsed branch summaries stack under whichever breadcrumb
@@ -270,7 +273,8 @@ function buildStackSpecs(activeId, visible, roles, byId, copyClear, width, loose
 function containForce(width, height) {
   let nodes = []
   function force(alpha) {
-    const m = P.CONTAIN_MARGIN
+    // tighter walls on small screens so nodes use the whole canvas
+    const m = P.CONTAIN_MARGIN * P.VIEWPORT_SCALE
     for (const n of nodes) {
       if (n.x < m) n.vx += (m - n.x) * P.CONTAIN_STRENGTH * alpha
       if (n.x > width - m) n.vx -= (n.x - (width - m)) * P.CONTAIN_STRENGTH * alpha
@@ -411,11 +415,13 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
     // space proportional to their visual weight. In TYPE mode it's dialed
     // way down — the cascade lattice owns the spacing there.
     const chargeScale = phys === 'type' ? C.CHARGE_SCALE : 1
+    // repulsion scales with the viewport so children don't splay off a
+    // small screen — the ring/cascade can't hold them otherwise
     sim.force(
       'charge',
       forceManyBody()
-        .strength((n) => P.CHARGE * ROLES[roleOf(n)].scale * chargeScale)
-        .distanceMax(P.CHARGE_MAX_DISTANCE)
+        .strength((n) => P.CHARGE * ROLES[roleOf(n)].scale * chargeScale * P.VIEWPORT_SCALE)
+        .distanceMax(P.CHARGE_MAX_DISTANCE * P.VIEWPORT_SCALE)
     )
 
     // Links: spring each connected pair toward its resting distance.
@@ -424,7 +430,7 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
       'link',
       forceLink(links)
         .id((n) => n.id)
-        .distance((l) => P.LINK_DISTANCE[l.kind])
+        .distance((l) => P.LINK_DISTANCE[l.kind] * P.VIEWPORT_SCALE)
         .strength(phys === 'type' ? C.LINK_STRENGTH : 0.6)
     )
 
@@ -462,14 +468,15 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
 
     let focusX, focusY
     if (phys === 'type') {
+      const vs = P.VIEWPORT_SCALE
       const aFs = fsFor('active', aNode.label, width)
-      const rowGap = Math.max(C.GAP, fsFor('child') * 1.9)
+      const rowGap = Math.max(C.GAP * vs, fsFor('child') * 1.7 + 6)
       const copyH =
         (stacked || mode === 'depth') && aNode.copy
           ? Math.min(150, Math.ceil(aNode.copy.length / 48) * 21 + 26)
           : 0
       // how far the composition reaches above / below the focus baseline
-      const above = depth * (stacked ? 34 : C.ROW_LIFT * 0.7) + aFs * 0.5 + 30
+      const above = depth * (stacked ? 34 : C.ROW_LIFT * vs * 0.7) + aFs * 0.5 + 30
       const below =
         aFs * 0.5 + copyH + childIds.length * rowGap +
         (sibCount ? 30 + sibCount * (stacked ? 30 : 0) : 0)
@@ -477,10 +484,10 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
       focusY = height * 0.46 - (below - above) / 2
 
       // left margin on a real grid; children indent one column right of it
-      const edge = Math.max(64, width * 0.07)
+      const edge = Math.max(28, width * 0.06)
       const colW = stacked
         ? 0
-        : Math.max(C.COL_W, labelWidth(aNode.label, aFs) + 70)
+        : Math.max(C.COL_W * vs * 0.78, labelWidth(aNode.label, aFs) + 30 * vs)
       // widest child label at child size, so nothing clips right
       let maxChild = 0
       for (const id of childIds) {
@@ -488,9 +495,9 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
       }
       // reserve room on the LEFT for the breadcrumb staircase so the
       // deepest ancestor never clips the edge
-      const leftReserve = stacked ? edge : edge + depth * C.BREAD_STEP
-      const rightLimit = width - 48 - colW - maxChild
-      focusX = Math.max(leftReserve, Math.min(leftReserve, rightLimit))
+      const leftReserve = stacked ? edge : edge + depth * C.BREAD_STEP * vs
+      const rightLimit = width - 24 - colW - maxChild
+      focusX = Math.max(edge, Math.min(leftReserve, Math.max(edge, rightLimit)))
     } else {
       focusX = cx
       focusY = cy
@@ -535,7 +542,9 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
             mode === 'structure' ? 0 : C.LOOSE)
         : buildCascadeSpecs(activeId, visible, roles, byId, copyClear)
 
-      sim.force('ring', cascadeForce(specs, stacked ? Math.max(C.STRENGTH, 0.5) : C.STRENGTH))
+      // stiffer column spring so charge repulsion can't break the edge —
+      // matters most on small screens where everything sits closer
+      sim.force('ring', cascadeForce(specs, stacked ? 0.9 : C.STRENGTH))
     } else {
       // Children bloom onto a ring around the (moving) focus. The
       // centered text modes need a wider ring — labels, not dots.
