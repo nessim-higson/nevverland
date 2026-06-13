@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { PHYSICS as P, fsFor } from './config'
 import Gallery3D from './Gallery3D'
+import { ancestorsOf } from './layout'
 
 // Media emission: at a project, the frames EMIT from the focus word —
 // fanned on an arc around it (skipping the bottom, where the copy
@@ -85,10 +86,14 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
   useEffect(() => setFullI(null), [activeId])
 
   useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && setFullI(null)
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return
+      const a = byId.get(activeId)
+      if (a?.parentId) onNavigate(byId.get(a.parentId)) // Esc = back out
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [activeId, byId, onNavigate])
 
   // orbit and tide keep moving even when the simulation is becalmed
   const [, setSpin] = useState(0)
@@ -158,15 +163,19 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
     if (active.parentId) onNavigate(byId.get(active.parentId))
   }
 
+  // WORK VIEW: you've arrived at an actual piece of work. The navigation
+  // steps aside — the focus word + path demote to a quiet corner header —
+  // and the imagery takes the stage as the hero.
+  const workView = !!media
+  const trail = ancestorsOf(activeId, byId).reverse().map((id) => byId.get(id))
+
   return (
     <>
-      {/* the WORK gallery: the strip of frames in WebGL, shader bending
-          with throw velocity; the nav stays drawn above it */}
-      {full && (
+      {workView && (
         <Gallery3D
           key={`gl-${activeId}`}
           media={media}
-          startIndex={fullI}
+          startIndex={fullI ?? 0}
           width={width}
           height={height ?? window.innerHeight}
           onIndex={(i) => setFullI(i)}
@@ -177,49 +186,36 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
       className="focusSpace"
       ref={spaceRef}
       onClick={onVoid}
-      style={{ pointerEvents: full ? 'none' : 'auto' }}
+      style={{ pointerEvents: workView ? 'none' : 'auto' }}
     >
-      {/* the end of the corridor: a leaf's image, deepest plane */}
-      {room && (
-        <img key={`room-${room.id}`} className="froomImg" src={room.img} alt="" />
-      )}
-
-      {/* the work's frames, emitted from the focus word itself */}
-      {media && active.x != null && (
-        <div
-          className="emitWrap"
-          style={{ transform: `translate3d(${active.x}px, ${active.y}px, 0)` }}
-        >
-          {media.map((m, i) => {
-            const s = slots[i]
-            const big = i % 2 === 0
-            const w = (full ? 64 : big ? 200 : 160) * vs
-            const h = (full ? 64 : (big ? 200 : 160) * (big ? 1.24 : 0.78)) * vs
-            return (
-              <div
-                key={`${activeId}-em-${i}`}
-                className={`eFrame ${fullI === i ? 'current' : ''} ${P.EMIT === 'tide' && fullI == null ? 'flow' : ''}`}
-                style={{
-                  width: w,
-                  height: h,
-                  zIndex: 20 + i,
-                  transform: `translate(calc(-50% + ${s.ox}px), calc(-50% + ${s.oy}px)) translateZ(${s.z}px)`,
-                  animationDelay: `${0.25 + i * 0.14}s`,
-                }}
-                onClick={() => setFullI(i)}
-              >
-                {m.type === 'video' ? (
-                  <video src={m.src} autoPlay muted loop playsInline />
-                ) : (
-                  <img src={m.src} alt="" draggable={false} />
-                )}
-              </div>
-            )
-          })}
+      {/* WORK VIEW: nav demoted to a corner header so imagery heroes */}
+      {workView && (
+        <div className="workHeader" key={`wh-${activeId}`}>
+          <nav className="crumbs">
+            {trail.map((n) => (
+              <span key={n.id} className="crumbItem">
+                <button onClick={() => onNavigate(n)}>{n.label}</button>
+                <i>/</i>
+              </span>
+            ))}
+          </nav>
+          <h2 className="workTitle">{active.label}</h2>
+          {active.copy && <p className="workBlurb">{active.copy}</p>}
+          <button
+            className="workBack"
+            onClick={() => active.parentId && onNavigate(byId.get(active.parentId))}
+          >
+            ↑ Back
+          </button>
         </div>
       )}
 
-      {visibleNodes.map((n) => {
+      {/* the end of the corridor: a media-less leaf's image, deepest plane */}
+      {!workView && room && (
+        <img key={`room-${room.id}`} className="froomImg" src={room.img} alt="" />
+      )}
+
+      {!workView && visibleNodes.map((n) => {
         if (n.x == null) return null
         const role = roles.get(n.id)
 
@@ -280,7 +276,7 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
       })}
 
       {/* the focus carries its copy on the focal plane */}
-      {active?.copy && active.x != null && !full && (
+      {!workView && active?.copy && active.x != null && (
         <div
           key={activeId}
           className="fcopy"
