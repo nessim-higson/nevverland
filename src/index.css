@@ -423,6 +423,12 @@ body {
 
 .flabel.hot { color: #ffffff; }
 .flabel.activeL { font-weight: 700; color: #ffffff; letter-spacing: -0.015em; }
+/* the way-back: the level you came from, almost dissolved into space */
+.flabel.wayback {
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.6);
+}
 
 .fcopy {
   position: absolute;

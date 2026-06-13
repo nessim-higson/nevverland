@@ -27,20 +27,20 @@ const INITIAL_FOCUS = NAV.id
 //               blocks riding the focus
 //   imagery   — structure + project stills springing forth in Z space
 const MODES = [
-  { key: 'reveal', label: '01 REVEAL' },
+  { key: 'focus', label: '01 FOCAL' },
   { key: 'type', label: '02 ORGANIC' },
   { key: 'orbs', label: '03 ORBS' },
   { key: 'structure', label: '04 STRUCTURE' },
   { key: 'imagery', label: '05 IMAGERY' },
   { key: 'depth', label: '06 DEPTH' },
-  { key: 'focus', label: '07 FOCAL' },
-  { key: 'rings', label: '08 RINGS' },
-  { key: 'weight', label: '09 WEIGHT' },
+  { key: 'rings', label: '07 RINGS' },
+  { key: 'weight', label: '08 WEIGHT' },
+  { key: 'reveal', label: '09 REVEAL' },
 ]
 
 export default function App() {
   const [activeId, setActiveId] = useState(INITIAL_FOCUS)
-  const [mode, setMode] = useState('reveal')
+  const [mode, setMode] = useState('focus')
   // bumped by the physics panel — re-kicks the simulation with the
   // freshly tuned parameters
   const [tuneV, setTuneV] = useState(0)

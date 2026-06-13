@@ -206,16 +206,31 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
       {visibleNodes.map((n) => {
         if (n.x == null) return null
         const role = roles.get(n.id)
-        // plane = tree depth relative to the focus: your past recedes
-        const plane = Math.max(-3, Math.min(1, n.depth - active.depth))
-        const z = plane >= 0 ? plane * STEP_FWD : plane * STEP_BACK
-        const blur = plane < 0 ? -plane * 1.7 : 0
-        const opacity =
-          plane < 0
-            ? Math.max(0.3, 1 + plane * 0.26)
-            : role === 'active'
-              ? 1
-              : 0.92
+
+        // Hide the parent navigation as you expand: you're immersed in
+        // the current focus + its children, floating in space. Siblings
+        // and far branches vanish entirely; only the IMMEDIATE parent
+        // lingers — a faint, deep way-back, almost dissolved.
+        if (role === 'sibling' || role === 'distant') return null
+        const isWayBack = role === 'parent' && n.id === active.parentId
+        if (role === 'parent' && !isWayBack) return null
+
+        let z, blur, opacity
+        if (isWayBack) {
+          // the level you came from, receded to a ghost far behind
+          z = -STEP_BACK * 1.15
+          blur = 3
+          opacity = hoverId === n.id ? 0.5 : 0.16
+        } else if (role === 'active') {
+          z = 0
+          blur = 0
+          opacity = 1
+        } else {
+          // children float just in front of the focal plane
+          z = STEP_FWD
+          blur = 0
+          opacity = hoverId === n.id ? 1 : 0.9
+        }
 
         return (
           <div
@@ -233,7 +248,7 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
             >
               <span
                 data-node={n.id}
-                className={`flabel ${role === 'active' ? 'activeL' : ''} ${hoverId === n.id ? 'hot' : ''}`}
+                className={`flabel ${role === 'active' ? 'activeL' : ''} ${isWayBack ? 'wayback' : ''} ${hoverId === n.id ? 'hot' : ''}`}
                 style={{ fontSize: fsOf(role) }}
                 onMouseEnter={() => setHoverId(n.id)}
                 onMouseLeave={() => setHoverId(null)}
