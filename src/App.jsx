@@ -35,8 +35,18 @@ export default function App() {
   // bumped by the physics panel — re-kicks the simulation with the
   // freshly tuned parameters
   const [tuneV, setTuneV] = useState(0)
+  // presentation mode — hide all chrome for clean capture (press H)
+  const [bare, setBare] = useState(false)
   const containerRef = useRef(null)
   const [dims, setDims] = useState({ width: 0, height: 0 })
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'h' || e.key === 'H') setBare((b) => !b)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // Responsive: measure immediately, then track the container — the
   // centering forces follow whatever size the stage becomes.
@@ -84,7 +94,7 @@ export default function App() {
 
   return (
     <div
-      className="stage"
+      className={`stage ${bare ? 'bare' : ''}`}
       ref={containerRef}
       onMouseMove={(e) => {
         // feeds the cursor-gravity force — mutation only, no re-render
@@ -139,7 +149,7 @@ export default function App() {
       </header>
       <footer className="chrome bottom">
         <span className="hint">
-          CLICK A NODE TO NAVIGATE — CLICK THE FOCUS TO STEP BACK
+          CLICK A NODE TO NAVIGATE — CLICK THE FOCUS TO STEP BACK — H FOR CLEAN VIEW
         </span>
         <span className="switch">
           {MODES.map((m) => (

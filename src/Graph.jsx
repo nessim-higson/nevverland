@@ -30,7 +30,7 @@ const HERO_DY = -30
 // the softer it renders — background type genuinely reads as behind.
 const ROLE_BLUR = { trail: 1.2, parent: 1.2, distant: 2, sibling: 0.7 }
 
-function TypeNodeView({ node, role, hovered, depthCue, width, dist = 0, onHover, onClick }) {
+function TypeNodeView({ node, role, hovered, depthCue, width, dist = 0, revealOrder = null, onHover, onClick }) {
   const t = TYPE_ROLES[role]
   // ancestors step down with generational distance — parent reads
   // clearly larger than grandparent, grandparent than root
@@ -73,18 +73,25 @@ function TypeNodeView({ node, role, hovered, depthCue, width, dist = 0, onHover,
           height={fs * 2}
           fill="transparent"
         />
-        <text
-          className="tlabel"
-          textAnchor="start"
-          dominantBaseline="central"
-          fontSize={fs}
-          fontWeight={t.weight}
-          letterSpacing={t.ls}
-          fill={role === 'active' ? '#ffffff' : '#dededb'}
-          style={{ transition: `font-size 0.55s ${SPRING}` }}
+        {/* reveal wrapper: newly-surfaced children rise in staggered
+            sequence; its transform composes under position + scale */}
+        <g
+          className={revealOrder != null ? 'gReveal' : undefined}
+          style={revealOrder != null ? { animationDelay: `${revealOrder * 80}ms` } : undefined}
         >
-          {node.label}
-        </text>
+          <text
+            className="tlabel"
+            textAnchor="start"
+            dominantBaseline="central"
+            fontSize={fs}
+            fontWeight={t.weight}
+            letterSpacing={t.ls}
+            fill={role === 'active' ? '#ffffff' : '#dededb'}
+            style={{ transition: `font-size 0.55s ${SPRING}` }}
+          >
+            {node.label}
+          </text>
+        </g>
       </g>
     </g>
   )
@@ -322,6 +329,9 @@ export default function Graph({ width, height, sim, activeId, mode, onNavigate }
             depthCue={depthCue}
             width={width}
             dist={Math.max(0, active.depth - n.depth)}
+            revealOrder={
+              roles.get(n.id) === 'child' ? active.childIds.indexOf(n.id) : null
+            }
             onHover={setHoverId}
             onClick={onNavigate}
           />

@@ -1,3 +1,10 @@
+:root {
+  /* display face for the type that carries the experience; clean
+     grotesk for copy + interface chrome */
+  --font-display: 'Clash Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-body: 'Switzer', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -14,9 +21,14 @@ body,
 
 body {
   background: #0a0b0d;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   color: #eaeaea;
+}
+
+::selection {
+  background: #eaeaea;
+  color: #0a0b0d;
 }
 
 .stage {
@@ -38,6 +50,7 @@ body {
 
 .graph .label {
   fill: #d8d8d6;
+  font-family: var(--font-display);
   letter-spacing: 0.03em;
   font-weight: 400;
   pointer-events: none;
@@ -49,8 +62,9 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* type labels — Helvetica Neue sentence case; tracking set per role */
+/* type labels — Clash Display, sentence case; tracking set per role */
 .graph .tlabel {
+  font-family: var(--font-display);
   pointer-events: none;
 }
 
@@ -142,6 +156,7 @@ body {
   pointer-events: auto;
   cursor: pointer;
   color: #dededb;
+  font-family: var(--font-display);
   white-space: nowrap;
   letter-spacing: 0.01em;
   transition: color 0.3s ease;
@@ -549,6 +564,7 @@ body {
   top: 0;
   display: inline-block;
   color: #dededb;
+  font-family: var(--font-display);
   white-space: nowrap;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -890,10 +906,36 @@ body {
 
 .wordmark {
   color: rgba(255, 255, 255, 0.85);
-  font-weight: 500;
-  letter-spacing: 0.4em;
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.34em;
 }
 
 .trail {
   font-variant-numeric: tabular-nums;
+}
+
+/* staggered child reveal — newly-surfaced children rise in sequence
+   with expo-out easing; persisting nodes glide via the physics */
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.gReveal {
+  animation: revealUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* presentation mode — hide all chrome for clean capture (press H) */
+.stage.bare .chrome,
+.stage.bare .tune {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.stage .chrome,
+.stage .tune {
+  transition: opacity 0.5s ease;
 }
