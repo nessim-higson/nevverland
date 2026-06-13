@@ -423,32 +423,43 @@ body {
 
 .flabel.hot { color: #ffffff; }
 .flabel.activeL { font-weight: 700; color: #ffffff; letter-spacing: -0.015em; }
-/* WORK VIEW: the nav has stepped aside to a quiet corner; the imagery
-   (Gallery3D, behind) is the hero. Header slides in from toward center,
-   as if the focus word travelled out of the way into the corner. */
-.workHeader {
+/* ARRIVED AT A PROJECT: imagery floats free + heroic. The nav is just a
+   light caption (no box) — title, faint path, blurb — top-left. */
+.leafCaption {
   position: absolute;
-  left: clamp(28px, 6vw, 110px);
-  top: clamp(64px, 12vh, 120px);
-  max-width: min(34ch, 80vw);
-  z-index: 3;
+  left: clamp(24px, 6vw, 96px);
+  top: clamp(60px, 12vh, 116px);
+  max-width: min(30ch, 72vw);
+  z-index: 40;
   pointer-events: auto;
-  animation: workHeaderIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
-  text-shadow: 0 1px 24px rgba(0, 0, 0, 0.85), 0 0 5px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 1px 24px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 0, 0, 0.6);
+  animation: fcopyIn 0.9s ease 0.15s both;
 }
 
-@keyframes workHeaderIn {
-  from {
-    opacity: 0;
-    transform: translate(18vw, 12vh) scale(1.3);
-  }
+.leafPath {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
-.workHeader .crumbs {
-  margin-bottom: 12px;
+.leafPath button {
+  background: none;
+  border: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0;
 }
 
-.workTitle {
+.leafPath button:hover { color: #fff; }
+.leafPath i { color: rgba(255, 255, 255, 0.28); font-style: normal; }
+
+.leafTitle {
+  display: block;
   font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -457,34 +468,71 @@ body {
   font-size: clamp(34px, 5vw, 60px);
 }
 
-.workBlurb {
+.leafCaption p {
   margin-top: 14px;
   font-family: var(--font-body);
-  font-size: 13px;
-  line-height: 21px;
+  font-size: 12.5px;
+  line-height: 20px;
   letter-spacing: 0.01em;
   text-wrap: pretty;
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.workBack {
-  margin-top: 22px;
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 2px;
-  color: rgba(255, 255, 255, 0.7);
-  font-family: var(--font-body);
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  padding: 8px 14px;
+/* the floating constellation of imagery — suspended in 3D, drifting */
+.floatField {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.floatFrame {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: auto;
   cursor: pointer;
-  transition: color 0.25s, border-color 0.25s;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.6);
+  /* fluid: planes glide between depths, hover pulls one to the front */
+  transition:
+    transform 0.85s cubic-bezier(0.22, 1, 0.3, 1),
+    width 0.85s cubic-bezier(0.22, 1, 0.3, 1),
+    height 0.85s cubic-bezier(0.22, 1, 0.3, 1),
+    filter 0.6s ease;
+  animation: floatIn 1s cubic-bezier(0.22, 1, 0.3, 1) both;
 }
 
-.workBack:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.6);
+.floatFrame.near {
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.78);
+}
+
+/* gentle perpetual drift, on an inner layer so it never fights the
+   depth/hover transform on the frame itself */
+.ffInner {
+  width: 100%;
+  height: 100%;
+  animation: ffDrift 9s ease-in-out infinite alternate;
+}
+
+.floatFrame img,
+.floatFrame video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+}
+
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateZ(-900px) scale(0.9);
+  }
+}
+
+@keyframes ffDrift {
+  from { transform: translateY(-2.5%); }
+  to   { transform: translateY(2.5%); }
 }
 
 /* the way-back: the level you came from — the door back, behind you */

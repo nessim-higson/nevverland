@@ -77,23 +77,49 @@ function emitSlots(n, full, variant, t, vs = 1) {
 const STEP_BACK = 410 // px of z per receded level
 const STEP_FWD = 110  // children float just in front of the focal plane
 
+// ── Arriving at a project: the imagery floats free, heroic ───────
+// A loose constellation of frames suspended in the open field, biased
+// center-right so the quiet caption (top-left) keeps its air. Each
+// frame holds its own DEPTH — near ones large and sharp, far ones
+// smaller, softer, dimmer — a gallery you drift through and discover.
+function floatLayout(n, W, H, vs) {
+  const P = [
+    { fx: 0.6, fy: 0.5, s: 1.0, rot: -3, d: 0.0 },
+    { fx: 0.36, fy: 0.64, s: 0.72, rot: 2.5, d: 0.36 },
+    { fx: 0.82, fy: 0.66, s: 0.6, rot: -2, d: 0.55 },
+    { fx: 0.5, fy: 0.27, s: 0.5, rot: 3.5, d: 0.72 },
+    { fx: 0.88, fy: 0.34, s: 0.42, rot: -4, d: 0.84 },
+  ]
+  const base = Math.min(H * 0.62, W * 0.46)
+  return Array.from({ length: n }, (_, i) => {
+    const p = P[i % P.length]
+    const h = base * p.s * (0.8 + vs * 0.2)
+    return { x: W * p.fx, y: H * p.fy, w: h * 0.8, h, rot: p.rot, depth: p.d }
+  })
+}
+
 export default function FocusSpace({ sim, activeId, width, height, onNavigate }) {
   const { visibleNodes, roles, byId } = sim
   const spaceRef = useRef(null)
   const [hoverId, setHoverId] = useState(null)
+  const [hoverFrame, setHoverFrame] = useState(null)
   const [fullI, setFullI] = useState(null) // which media is full screen
 
-  useEffect(() => setFullI(null), [activeId])
+  useEffect(() => {
+    setFullI(null)
+    setHoverFrame(null)
+  }, [activeId])
 
   useEffect(() => {
     const onKey = (e) => {
       if (e.key !== 'Escape') return
+      if (fullI != null) { setFullI(null); return } // first lift out of fullscreen
       const a = byId.get(activeId)
-      if (a?.parentId) onNavigate(byId.get(a.parentId)) // Esc = back out
+      if (a?.parentId) onNavigate(byId.get(a.parentId)) // then back out
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [activeId, byId, onNavigate])
+  }, [activeId, byId, onNavigate, fullI])
 
   // orbit and tide keep moving even when the simulation is becalmed
   const [, setSpin] = useState(0)
@@ -126,10 +152,8 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
   // media-less leaves keep the corridor-end room image
   const room = !media && active?.img && isLeaf ? active : null
   const vs = P.VIEWPORT_SCALE
-  const slots = media
-    ? emitSlots(media.length, fullI != null, P.EMIT, performance.now() / 1000, vs)
-    : []
   const full = media && fullI != null ? media[fullI] : null
+  const layout = media ? floatLayout(media.length, width, height ?? window.innerHeight, vs) : []
 
   const fsOf = (role) =>
     role === 'active'
@@ -152,10 +176,12 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
     onNavigate(n)
   }
 
-  // THE SPATIAL LAW: click a node to go deeper, click the VOID to back
-  // out one level (the world pulls back, the parent rushes to center).
+  // THE SPATIAL LAW: click a node (or a floating image) to go deeper,
+  // click the VOID to back out one level. Inside a project, clicking the
+  // void first lifts a full image back into the floating field, then on
+  // the next void-click steps up to the parent.
   const onVoid = (e) => {
-    if (e.target.closest('.flabel, .eFrame, .froomImg')) return // hit a node
+    if (e.target.closest('.flabel, .floatFrame, .froomImg, .leafCaption')) return
     if (full) {
       setFullI(null)
       return
@@ -171,11 +197,13 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
 
   return (
     <>
-      {workView && (
+      {/* clicking a floating frame dives it fullscreen — the full WebGL
+          gallery, shader bending as you throw through the work's reel */}
+      {full && (
         <Gallery3D
           key={`gl-${activeId}`}
           media={media}
-          startIndex={fullI ?? 0}
+          startIndex={fullI}
           width={width}
           height={height ?? window.innerHeight}
           onIndex={(i) => setFullI(i)}
@@ -186,28 +214,64 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
       className="focusSpace"
       ref={spaceRef}
       onClick={onVoid}
-      style={{ pointerEvents: workView ? 'none' : 'auto' }}
+      style={{ pointerEvents: full ? 'none' : 'auto' }}
     >
-      {/* WORK VIEW: nav demoted to a corner header so imagery heroes */}
-      {workView && (
-        <div className="workHeader" key={`wh-${activeId}`}>
-          <nav className="crumbs">
-            {trail.map((n) => (
-              <span key={n.id} className="crumbItem">
-                <button onClick={() => onNavigate(n)}>{n.label}</button>
-                <i>/</i>
-              </span>
-            ))}
-          </nav>
-          <h2 className="workTitle">{active.label}</h2>
-          {active.copy && <p className="workBlurb">{active.copy}</p>}
-          <button
-            className="workBack"
-            onClick={() => active.parentId && onNavigate(byId.get(active.parentId))}
-          >
-            ↑ Back
-          </button>
-        </div>
+      {/* ARRIVED AT A PROJECT — the imagery floats free and heroic; the
+          nav dissolves to a light caption, no box, no demotion drama */}
+      {workView && !full && (
+        <>
+          <div className="leafCaption" key={`lc-${activeId}`}>
+            <span className="leafPath">
+              {trail.map((n) => (
+                <button key={n.id} onClick={() => onNavigate(n)}>
+                  {n.label} <i>/</i>{' '}
+                </button>
+              ))}
+            </span>
+            <span className="leafTitle">{active.label}</span>
+            {active.copy && <p>{active.copy}</p>}
+          </div>
+
+          <div className="floatField">
+            {media.map((m, i) => {
+              const f = layout[i]
+              const near = hoverFrame === i
+              const z = near ? 140 : -f.depth * 620
+              const blur = near ? 0 : f.depth * 3.2
+              const bright = near ? 1.02 : 1 - f.depth * 0.4
+              return (
+                <div
+                  key={`${activeId}-ff-${i}`}
+                  className={`floatFrame ${near ? 'near' : ''}`}
+                  style={{
+                    left: f.x,
+                    top: f.y,
+                    width: near ? f.w * 1.18 : f.w,
+                    height: near ? f.h * 1.18 : f.h,
+                    transform: `translate(-50%, -50%) translateZ(${z}px) rotate(${near ? 0 : f.rot}deg)`,
+                    filter: `grayscale(1) blur(${blur}px) brightness(${bright})`,
+                    zIndex: near ? 60 : 10 + Math.round((1 - f.depth) * 20),
+                    animationDelay: `${0.1 + i * 0.12}s`,
+                  }}
+                  onMouseEnter={() => setHoverFrame(i)}
+                  onMouseLeave={() => setHoverFrame(null)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setFullI(i)
+                  }}
+                >
+                  <div className="ffInner" style={{ animationDelay: `${i * 0.7}s` }}>
+                    {m.type === 'video' ? (
+                      <video src={m.src} autoPlay muted loop playsInline />
+                    ) : (
+                      <img src={m.src} alt="" draggable={false} />
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
       )}
 
       {/* the end of the corridor: a media-less leaf's image, deepest plane */}
