@@ -20,7 +20,16 @@ import { ancestorsOf } from './layout'
 
 export default function RevealSpace({ byId, activeId, width, height, onNavigate }) {
   const [fullI, setFullI] = useState(null)
-  useEffect(() => setFullI(null), [activeId])
+  // fold orchestration: 'in' = layer settling, 'out' = folding away.
+  // `chosen` is the row that was clicked, so it can stay/lift while the
+  // others concertina shut around it. `dir` = down (drill) | up (climb).
+  const [fold, setFold] = useState({ phase: 'in', chosen: null, dir: 'down' })
+
+  useEffect(() => {
+    setFullI(null)
+    setFold({ phase: 'in', chosen: null, dir: 'down' })
+  }, [activeId])
+
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && (fullI != null ? setFullI(null) : back())
     window.addEventListener('keydown', onKey)
@@ -34,7 +43,14 @@ export default function RevealSpace({ byId, activeId, width, height, onNavigate 
   const media = isLeaf && active.media ? active.media : null
   const parentId = active.parentId
 
-  const back = () => parentId && onNavigate(byId.get(parentId))
+  // fold the current layer up, THEN commit the navigation — the layer
+  // physically closes before the next one unfolds
+  const go = (node, dir, chosen = null) => {
+    if (!node) return
+    setFold({ phase: 'out', chosen, dir })
+    setTimeout(() => onNavigate(node), 430)
+  }
+  const back = () => go(parentId && byId.get(parentId), 'up')
 
   return (
     <div className="reveal">
@@ -50,12 +66,14 @@ export default function RevealSpace({ byId, activeId, width, height, onNavigate 
         />
       )}
 
-      <div className={`revealCol ${media ? 'overMedia' : ''}`}>
+      <div
+        className={`revealCol ${media ? 'overMedia' : ''} fold-${fold.phase} fold-${fold.dir}`}
+      >
         {/* breadcrumb — the collapsed layers behind you, each tappable */}
         <nav className="crumbs" key={`cr-${activeId}`}>
           {trail.map((n, i) => (
             <span key={n.id} className="crumbItem" style={{ animationDelay: `${i * 50}ms` }}>
-              <button onClick={() => onNavigate(n)}>{n.label}</button>
+              <button onClick={() => go(n, 'up')}>{n.label}</button>
               <i>/</i>
             </span>
           ))}
@@ -77,12 +95,18 @@ export default function RevealSpace({ byId, activeId, width, height, onNavigate 
           </p>
         )}
 
-        {/* where you can go — a clean, staggered, non-overlapping list */}
+        {/* where you can go — a clean list that FOLDS shut on descend:
+            the unchosen rows concertina away, the chosen one folds up
+            into the breadcrumb, then the next level unfolds open */}
         {!isLeaf && (
           <ul className="revealList" key={`list-${activeId}`}>
             {children.map((c, i) => (
-              <li key={c.id} style={{ animationDelay: `${120 + i * 70}ms` }}>
-                <button onClick={() => onNavigate(c)}>
+              <li
+                key={c.id}
+                className={fold.chosen === c.id ? 'chosen' : ''}
+                style={{ '--i': i }}
+              >
+                <button onClick={() => go(c, 'down', c.id)}>
                   <span className="idx">{String(i + 1).padStart(2, '0')}</span>
                   <span className="lbl">{c.label}</span>
                   {c.media && <span className="tag">work</span>}
