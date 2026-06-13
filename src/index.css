@@ -596,6 +596,37 @@ body {
 
 .eFrame:hover { box-shadow: 0 22px 70px rgba(0, 0, 0, 0.75); }
 
+/* hover surfaces a frame forward, larger and sharp — discovery */
+.eFrame.near {
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.82);
+  z-index: 60;
+}
+
+/* VIEWING an image: the whole nav structure dissolves off the image so
+   it is seen completely clean — no panels, no text on the picture */
+.focusSpace.viewing .fnode,
+.focusSpace.viewing .emitWrap,
+.focusSpace.viewing .fcopy {
+  opacity: 0 !important;
+  transition: opacity 0.55s ease;
+  pointer-events: none;
+}
+
+.imgExit {
+  position: absolute;
+  left: clamp(24px, 6vw, 96px);
+  bottom: 8vh;
+  z-index: 50;
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  animation: fcopyIn 0.8s ease 0.4s both;
+}
+
 /* tide moves by the frame-clock, not by eased transitions — otherwise
    the wrap-around jump smears across the word */
 .eFrame.flow {

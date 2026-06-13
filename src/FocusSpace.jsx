@@ -153,7 +153,9 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
   const room = !media && active?.img && isLeaf ? active : null
   const vs = P.VIEWPORT_SCALE
   const full = media && fullI != null ? media[fullI] : null
-  const layout = media ? floatLayout(media.length, width, height ?? window.innerHeight, vs) : []
+  const slots = media
+    ? emitSlots(media.length, false, P.EMIT, performance.now() / 1000, vs)
+    : []
 
   const fsOf = (role) =>
     role === 'active'
@@ -211,75 +213,64 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
       )}
 
     <div
-      className="focusSpace"
+      className={`focusSpace ${full ? 'viewing' : ''}`}
       ref={spaceRef}
       onClick={onVoid}
       style={{ pointerEvents: full ? 'none' : 'auto' }}
     >
-      {/* ARRIVED AT A PROJECT — the imagery floats free and heroic; the
-          nav dissolves to a light caption, no box, no demotion drama */}
-      {workView && !full && (
-        <>
-          <div className="leafCaption" key={`lc-${activeId}`}>
-            <span className="leafPath">
-              {trail.map((n) => (
-                <button key={n.id} onClick={() => onNavigate(n)}>
-                  {n.label} <i>/</i>{' '}
-                </button>
-              ))}
-            </span>
-            <span className="leafTitle">{active.label}</span>
-            {active.copy && <p>{active.copy}</p>}
-          </div>
-
-          <div className="floatField">
-            {media.map((m, i) => {
-              const f = layout[i]
-              const near = hoverFrame === i
-              const z = near ? 140 : -f.depth * 620
-              const blur = near ? 0 : f.depth * 3.2
-              const bright = near ? 1.02 : 1 - f.depth * 0.4
-              return (
-                <div
-                  key={`${activeId}-ff-${i}`}
-                  className={`floatFrame ${near ? 'near' : ''}`}
-                  style={{
-                    left: f.x,
-                    top: f.y,
-                    width: near ? f.w * 1.18 : f.w,
-                    height: near ? f.h * 1.18 : f.h,
-                    transform: `translate(-50%, -50%) translateZ(${z}px) rotate(${near ? 0 : f.rot}deg)`,
-                    filter: `grayscale(1) blur(${blur}px) brightness(${bright})`,
-                    zIndex: near ? 60 : 10 + Math.round((1 - f.depth) * 20),
-                    animationDelay: `${0.1 + i * 0.12}s`,
-                  }}
-                  onMouseEnter={() => setHoverFrame(i)}
-                  onMouseLeave={() => setHoverFrame(null)}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setFullI(i)
-                  }}
-                >
-                  <div className="ffInner" style={{ animationDelay: `${i * 0.7}s` }}>
-                    {m.type === 'video' ? (
-                      <video src={m.src} autoPlay muted loop playsInline />
-                    ) : (
-                      <img src={m.src} alt="" draggable={false} />
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </>
+      {/* AT A PROJECT (v25 spirit) — the work's images emit from the
+          focus word, floating around it. Hover one and it surfaces
+          forward, larger; click and it opens clean and full. */}
+      {media && !full && active.x != null && (
+        <div
+          className="emitWrap"
+          style={{ transform: `translate3d(${active.x}px, ${active.y}px, 0)` }}
+        >
+          {media.map((m, i) => {
+            const s = slots[i]
+            const near = hoverFrame === i
+            const big = i % 2 === 0
+            const w = (near ? 330 : big ? 230 : 188) * vs
+            const h = w * (near ? 1.0 : big ? 1.2 : 0.78)
+            return (
+              <div
+                key={`${activeId}-em-${i}`}
+                className={`eFrame ${near ? 'near' : ''}`}
+                style={{
+                  width: w,
+                  height: h,
+                  zIndex: near ? 60 : 20 + i,
+                  transform: `translate(calc(-50% + ${s.ox}px), calc(-50% + ${s.oy}px)) translateZ(${near ? 130 : s.z}px) rotate(${near ? 0 : (i % 2 ? 2 : -2)}deg)`,
+                  filter: near ? 'grayscale(1)' : 'grayscale(1) brightness(0.82)',
+                  animationDelay: `${0.25 + i * 0.13}s`,
+                }}
+                onMouseEnter={() => setHoverFrame(i)}
+                onMouseLeave={() => setHoverFrame(null)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setFullI(i)
+                }}
+              >
+                {m.type === 'video' ? (
+                  <video src={m.src} autoPlay muted loop playsInline />
+                ) : (
+                  <img src={m.src} alt="" draggable={false} />
+                )}
+              </div>
+            )
+          })}
+        </div>
       )}
+
+      {/* viewing an image: a whisper-faint exit hint, nothing on the image */}
+      {full && <span className="imgExit">esc ↩ back</span>}
 
       {/* the end of the corridor: a media-less leaf's image, deepest plane */}
       {!workView && room && (
         <img key={`room-${room.id}`} className="froomImg" src={room.img} alt="" />
       )}
 
-      {!workView && visibleNodes.map((n) => {
+      {visibleNodes.map((n) => {
         if (n.x == null) return null
         const role = roles.get(n.id)
 
@@ -326,7 +317,9 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
               <span
                 data-node={n.id}
                 className={`flabel ${role === 'active' ? 'activeL' : ''} ${isWayBack ? 'wayback' : ''} ${hoverId === n.id ? 'hot' : ''}`}
-                style={{ fontSize: fsOf(role) }}
+                // at a project the title shrinks to a quiet caption so the
+                // images lead, not the type
+                style={{ fontSize: role === 'active' && media ? fsOf('active') * 0.5 : fsOf(role) }}
                 onMouseEnter={() => setHoverId(n.id)}
                 onMouseLeave={() => setHoverId(null)}
                 onClick={() => clickNode(n)}
@@ -340,7 +333,7 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
       })}
 
       {/* the focus carries its copy on the focal plane */}
-      {!workView && active?.copy && active.x != null && (
+      {!full && active?.copy && active.x != null && (
         <div
           key={activeId}
           className="fcopy"
