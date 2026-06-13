@@ -154,12 +154,13 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  max-width: 44ch;
+  max-width: 42ch;
   font-size: 13px;
-  line-height: 21px;
+  line-height: 22px;
   letter-spacing: 0.01em;
   text-align: center;
-  color: rgba(255, 255, 255, 0.55);
+  text-wrap: pretty;
+  color: rgba(255, 255, 255, 0.5);
   pointer-events: none;
   /* opacity-only entrance — the positioning transform must survive */
   animation: fcopyIn 1s ease 0.3s both;
@@ -755,12 +756,13 @@ body {
 .nodeCopy {
   position: absolute;
   z-index: 2;
-  max-width: 40ch;
+  max-width: 38ch;
   font-size: 13px;
-  line-height: 21px;
+  line-height: 22px;
   letter-spacing: 0.01em;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.5);
   pointer-events: none;
+  text-wrap: pretty;
   animation: copyIn 0.9s ease 0.25s both;
 }
 

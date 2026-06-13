@@ -164,12 +164,13 @@ function buildCascadeSpecs(activeId, visible, roles, byId, copyClear = 0) {
         dy: off * rowGap + (off > 0 ? C.ACTIVE_CLEAR + copyClear : 0),
       })
     } else if (role === 'parent') {
-      // Breadcrumb chain: one column up-left per level of depth.
+      // Breadcrumb chain: a compact staircase up-left, one gentle step
+      // per level (a 260px column per level sprawled off the edge).
       const d = ancestors.indexOf(n.id) + 1
       specs.push({
         node: n,
         anchor: active,
-        dx: -C.COL_W * d,
+        dx: -C.BREAD_STEP * d,
         dy: -C.ROW_LIFT * d,
       })
     } else if (role === 'distant') {
@@ -203,19 +204,22 @@ function buildCascadeSpecs(activeId, visible, roles, byId, copyClear = 0) {
  * siblings and collapsed branches. The physics still carries every
  * move; this only defines where things come to rest.
  */
-function buildStackSpecs(activeId, visible, roles, byId, copyClear, width) {
+function buildStackSpecs(activeId, visible, roles, byId, copyClear, width, loose) {
   const active = byId.get(activeId)
   const ancestors = ancestorsOf(activeId, byId) // [parent, grandparent, …]
   const specs = []
 
-  // everything scales off the (slider-driven) effective type sizes
+  // everything scales off the (slider-driven) effective type sizes.
+  // row rhythm must clear the collision radius (fsFor*0.8) with real air
+  // so neighbouring rows never stack on each other.
   const aFs = fsFor('active', active.label, width)
-  const rowGap = Math.max(C.GAP, fsFor('child') * 1.8)
-  const sibGap = Math.max(30, fsFor('sibling') * 2.3)
+  const rowGap = Math.max(C.GAP, fsFor('child') * 2.15)
+  const sibGap = Math.max(30, fsFor('sibling') * 2.6)
 
   // LOOSE: each node leans off the column by its own stable amount —
-  // 0 = laser-aligned, dial it up and the tree goes windblown.
-  const lean = (id) => ((hashOf(id) % 100) / 50 - 1) * C.LOOSE
+  // 0 = laser-aligned (Structure holds one true edge), dial it up and
+  // the tree goes windblown.
+  const lean = (id) => (loose ? ((hashOf(id) % 100) / 50 - 1) * loose : 0)
 
   // breadcrumb trail stacked above the focus
   ancestors.forEach((id, k) => {
@@ -441,22 +445,56 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
     // everything connected to it along, which is exactly the "active
     // node pulls the system into a new equilibrium" feel. Everyone
     // else gets only a whisper of gravity so the cloud stays on screen.
-    // Focus placement. Organic cascade: left-of-center, shifting right
-    // with depth to keep the breadcrumb staircase in frame. Stacked
-    // modes: a fixed left column, leaving the right field open for the
-    // imagery hero.
+    // ── Composition anchoring ──────────────────────────────────
+    // The cascade builds DOWNWARD from the focus, so pinning the focus
+    // to screen-center leaves the whole block hanging in the lower half
+    // with a dead top — the #1 amateur tell. Instead we measure the
+    // block's vertical extent and place its OPTICAL centre near 46% of
+    // the viewport, and we clamp horizontally so a long child label can
+    // never clip off the right edge.
     const stacked = mode === 'structure' || mode === 'imagery'
     const depth = ancestorsOf(activeId, byId).length
-    const focusX = stacked
-      ? Math.max(190, width * 0.18)
-      : phys === 'type'
-        ? cx - C.COL_W * 0.5 + C.COL_W * depth * 0.45
-        : cx
-    const focusY = stacked
-      ? cy - 30
-      : phys === 'type'
-        ? cy - 40 + depth * C.ROW_LIFT * 0.4
-        : cy
+    const aNode = byId.get(activeId)
+    const childIds = aNode.childIds.filter((id) => roles.has(id))
+    const sibCount = aNode.parentId
+      ? byId.get(aNode.parentId).childIds.filter((id) => roles.has(id) && id !== activeId).length
+      : 0
+
+    let focusX, focusY
+    if (phys === 'type') {
+      const aFs = fsFor('active', aNode.label, width)
+      const rowGap = Math.max(C.GAP, fsFor('child') * 1.9)
+      const copyH =
+        (stacked || mode === 'depth') && aNode.copy
+          ? Math.min(150, Math.ceil(aNode.copy.length / 48) * 21 + 26)
+          : 0
+      // how far the composition reaches above / below the focus baseline
+      const above = depth * (stacked ? 34 : C.ROW_LIFT * 0.7) + aFs * 0.5 + 30
+      const below =
+        aFs * 0.5 + copyH + childIds.length * rowGap +
+        (sibCount ? 30 + sibCount * (stacked ? 30 : 0) : 0)
+      // optical centre of the block → 46% of viewport
+      focusY = height * 0.46 - (below - above) / 2
+
+      // left margin on a real grid; children indent one column right of it
+      const edge = Math.max(64, width * 0.07)
+      const colW = stacked
+        ? 0
+        : Math.max(C.COL_W, labelWidth(aNode.label, aFs) + 70)
+      // widest child label at child size, so nothing clips right
+      let maxChild = 0
+      for (const id of childIds) {
+        maxChild = Math.max(maxChild, labelWidth(byId.get(id).label, fsFor('child')))
+      }
+      // reserve room on the LEFT for the breadcrumb staircase so the
+      // deepest ancestor never clips the edge
+      const leftReserve = stacked ? edge : edge + depth * C.BREAD_STEP
+      const rightLimit = width - 48 - colW - maxChild
+      focusX = Math.max(leftReserve, Math.min(leftReserve, rightLimit))
+    } else {
+      focusX = cx
+      focusY = cy
+    }
     sim.force(
       'x',
       forceX(focusX).strength((n) =>
@@ -491,8 +529,10 @@ export function useSimulation(activeId, width, height, mode = 'type', tuneV = 0)
       // Stacked modes run a stiffer spring — the simulation stops dead
       // when idle there, so rows must reach their slots before the
       // energy runs out or the column freezes mid-zigzag.
+      // Structure holds a laser-true left edge; Imagery keeps some life.
       const specs = stacked
-        ? buildStackSpecs(activeId, visible, roles, byId, copyClear, width)
+        ? buildStackSpecs(activeId, visible, roles, byId, copyClear, width,
+            mode === 'structure' ? 0 : C.LOOSE)
         : buildCascadeSpecs(activeId, visible, roles, byId, copyClear)
 
       sim.force('ring', cascadeForce(specs, stacked ? Math.max(C.STRENGTH, 0.5) : C.STRENGTH))

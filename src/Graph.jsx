@@ -291,7 +291,8 @@ export default function Graph({ width, height, sim, activeId, mode, onNavigate }
           links.map((l) => {
             const s = typeof l.source === 'object' ? l.source : byId.get(l.source)
             const t = typeof l.target === 'object' ? l.target : byId.get(l.target)
-            if (!s || !t || s.x == null || t.x == null) return null
+            if (!s || !t) return null
+            if (![s.x, s.y, t.x, t.y].every(Number.isFinite)) return null
             const onTrail = trail.has(s.id) && trail.has(t.id)
             const lit = hoverId === s.id || hoverId === t.id
             return (
@@ -302,8 +303,11 @@ export default function Graph({ width, height, sim, activeId, mode, onNavigate }
                 x2={ax(t)}
                 y2={t.y}
                 stroke="#fff"
-                strokeWidth={onTrail ? 1 : 0.75}
-                opacity={lit ? 0.5 : onTrail ? 0.3 : 0.12}
+                // gossamer hairlines — connective tissue, not pencil
+                // scribble; only the hovered/breadcrumb path firms up
+                strokeWidth={lit ? 1 : 0.5}
+                vectorEffect="non-scaling-stroke"
+                opacity={lit ? 0.45 : onTrail ? 0.16 : 0.06}
                 style={{ transition: 'opacity 0.35s ease' }}
               />
             )

@@ -90,6 +90,7 @@ export const PHYSICS = {
 // ─────────────────────────────────────────────────────────────
 export const CASCADE = {
   COL_W: 260,        // horizontal step per level (the indent of a cascade)
+  BREAD_STEP: 132,   // compact left step per breadcrumb level
   ROW_LIFT: 80,      // how far each ancestor sits above the active node
   GAP: 36,           // vertical rhythm between items in a column
   GAP_DISTANT: 28,   // tighter rhythm for collapsed far-away branches
