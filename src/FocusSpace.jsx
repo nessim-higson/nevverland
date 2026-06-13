@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { PHYSICS as P, fsFor } from './config'
-import Gallery3D from './Gallery3D'
+import ImageGallery from './ImageGallery'
 import { ancestorsOf } from './layout'
 
 // Media emission: at a project, the frames EMIT from the focus word —
@@ -103,23 +103,29 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
   const spaceRef = useRef(null)
   const [hoverId, setHoverId] = useState(null)
   const [hoverFrame, setHoverFrame] = useState(null)
-  const [fullI, setFullI] = useState(null) // which media is full screen
+  // imagery state: imgIdx null = hero (emission). non-null = an image is
+  // open, at depth imgFull (false = gallery / inset, true = fullscreen).
+  const [imgIdx, setImgIdx] = useState(null)
+  const [imgFull, setImgFull] = useState(false)
+  const viewingImg = imgIdx != null
 
   useEffect(() => {
-    setFullI(null)
+    setImgIdx(null)
+    setImgFull(false)
     setHoverFrame(null)
   }, [activeId])
 
   useEffect(() => {
     const onKey = (e) => {
       if (e.key !== 'Escape') return
-      if (fullI != null) { setFullI(null); return } // first lift out of fullscreen
+      if (imgFull) { setImgFull(false); return } // full → gallery
+      if (imgIdx != null) { setImgIdx(null); return } // gallery → hero
       const a = byId.get(activeId)
-      if (a?.parentId) onNavigate(byId.get(a.parentId)) // then back out
+      if (a?.parentId) onNavigate(byId.get(a.parentId)) // hero → parent
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [activeId, byId, onNavigate, fullI])
+  }, [activeId, byId, onNavigate, imgIdx, imgFull])
 
   // orbit and tide keep moving even when the simulation is becalmed
   const [, setSpin] = useState(0)
@@ -152,7 +158,6 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
   // media-less leaves keep the corridor-end room image
   const room = !media && active?.img && isLeaf ? active : null
   const vs = P.VIEWPORT_SCALE
-  const full = media && fullI != null ? media[fullI] : null
   const slots = media
     ? emitSlots(media.length, false, P.EMIT, performance.now() / 1000, vs)
     : []
@@ -168,26 +173,13 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
             ? 15
             : 13
 
-  // at a leaf with media, clicking the focus word closes the full
-  // image first; a second click steps back up as usual
-  const clickNode = (n) => {
-    if (n.id === activeId && full) {
-      setFullI(null)
-      return
-    }
-    onNavigate(n)
-  }
+  const clickNode = (n) => onNavigate(n)
 
-  // THE SPATIAL LAW: click a node (or a floating image) to go deeper,
-  // click the VOID to back out one level. Inside a project, clicking the
-  // void first lifts a full image back into the floating field, then on
-  // the next void-click steps up to the parent.
+  // THE SPATIAL LAW in the HERO state: click a node to go deeper, click
+  // the void (the dark canvas) to back out a level. (Inside the imagery,
+  // the gallery owns its own taps: image steps in/out, canvas → hero.)
   const onVoid = (e) => {
-    if (e.target.closest('.flabel, .floatFrame, .froomImg, .leafCaption')) return
-    if (full) {
-      setFullI(null)
-      return
-    }
+    if (e.target.closest('.flabel, .eFrame, .froomImg')) return
     if (active.parentId) onNavigate(byId.get(active.parentId))
   }
 
@@ -199,29 +191,30 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
 
   return (
     <>
-      {/* clicking a floating frame dives it fullscreen — the full WebGL
-          gallery, shader bending as you throw through the work's reel */}
-      {full && (
-        <Gallery3D
-          key={`gl-${activeId}`}
+      {/* an image is open — the gallery owns the screen: tap the image to
+          step in/out of fullscreen, swipe between images, tap the canvas
+          around it to return to the hero */}
+      {viewingImg && (
+        <ImageGallery
           media={media}
-          startIndex={fullI}
-          width={width}
-          height={height ?? window.innerHeight}
-          onIndex={(i) => setFullI(i)}
+          idx={imgIdx}
+          setIdx={setImgIdx}
+          full={imgFull}
+          onImageTap={() => setImgFull((f) => !f)}
+          onCanvasTap={() => setImgIdx(null)}
         />
       )}
 
     <div
-      className={`focusSpace ${full ? 'viewing' : ''}`}
+      className={`focusSpace ${viewingImg ? 'viewing' : ''}`}
       ref={spaceRef}
       onClick={onVoid}
-      style={{ pointerEvents: full ? 'none' : 'auto' }}
+      style={{ pointerEvents: viewingImg ? 'none' : 'auto' }}
     >
       {/* AT A PROJECT (v25 spirit) — the work's images emit from the
           focus word, floating around it. Hover one and it surfaces
-          forward, larger; click and it opens clean and full. */}
-      {media && !full && active.x != null && (
+          forward; tap one to open the gallery. */}
+      {media && !viewingImg && active.x != null && (
         <div
           className="emitWrap"
           style={{ transform: `translate3d(${active.x}px, ${active.y}px, 0)` }}
@@ -248,7 +241,8 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
                 onMouseLeave={() => setHoverFrame(null)}
                 onClick={(e) => {
                   e.stopPropagation()
-                  setFullI(i)
+                  setImgIdx(i) // opens the gallery on this image
+                  setImgFull(false)
                 }}
               >
                 {m.type === 'video' ? (
@@ -261,9 +255,6 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
           })}
         </div>
       )}
-
-      {/* viewing an image: a whisper-faint exit hint, nothing on the image */}
-      {full && <span className="imgExit">esc ↩ back</span>}
 
       {/* the end of the corridor: a media-less leaf's image, deepest plane */}
       {!workView && room && (
@@ -333,7 +324,7 @@ export default function FocusSpace({ sim, activeId, width, height, onNavigate })
       })}
 
       {/* the focus carries its copy on the focal plane */}
-      {!full && active?.copy && active.x != null && (
+      {!viewingImg && active?.copy && active.x != null && (
         <div
           key={activeId}
           className="fcopy"
