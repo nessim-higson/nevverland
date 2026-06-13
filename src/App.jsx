@@ -3,6 +3,7 @@ import Graph from './Graph'
 import FocusSpace from './FocusSpace'
 import RingsSpace from './RingsSpace'
 import WeightSpace from './WeightSpace'
+import RevealSpace from './RevealSpace'
 import Controls from './Controls'
 import { useSimulation } from './useSimulation'
 import { ancestorsOf } from './layout'
@@ -26,19 +27,20 @@ const INITIAL_FOCUS = NAV.id
 //               blocks riding the focus
 //   imagery   — structure + project stills springing forth in Z space
 const MODES = [
-  { key: 'type', label: '01 ORGANIC' },
-  { key: 'orbs', label: '02 ORBS' },
-  { key: 'structure', label: '03 STRUCTURE' },
-  { key: 'imagery', label: '04 IMAGERY' },
-  { key: 'depth', label: '05 DEPTH' },
-  { key: 'focus', label: '06 FOCAL' },
-  { key: 'rings', label: '07 RINGS' },
-  { key: 'weight', label: '08 WEIGHT' },
+  { key: 'reveal', label: '01 REVEAL' },
+  { key: 'type', label: '02 ORGANIC' },
+  { key: 'orbs', label: '03 ORBS' },
+  { key: 'structure', label: '04 STRUCTURE' },
+  { key: 'imagery', label: '05 IMAGERY' },
+  { key: 'depth', label: '06 DEPTH' },
+  { key: 'focus', label: '07 FOCAL' },
+  { key: 'rings', label: '08 RINGS' },
+  { key: 'weight', label: '09 WEIGHT' },
 ]
 
 export default function App() {
   const [activeId, setActiveId] = useState(INITIAL_FOCUS)
-  const [mode, setMode] = useState('focus')
+  const [mode, setMode] = useState('reveal')
   // bumped by the physics panel — re-kicks the simulation with the
   // freshly tuned parameters
   const [tuneV, setTuneV] = useState(0)
@@ -116,7 +118,15 @@ export default function App() {
       }}
     >
       {dims.width > 0 &&
-        (mode === 'focus' ? (
+        (mode === 'reveal' ? (
+          <RevealSpace
+            byId={sim.byId}
+            activeId={activeId}
+            width={dims.width}
+            height={dims.height}
+            onNavigate={navigate}
+          />
+        ) : mode === 'focus' ? (
           <FocusSpace
             sim={sim}
             activeId={activeId}

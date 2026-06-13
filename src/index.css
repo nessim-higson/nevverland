@@ -107,6 +107,192 @@ body {
   }
 }
 
+/* ── REVEAL: progressive drill-down, one clean layer at a time ─ */
+
+.reveal {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.revealCol {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 clamp(28px, 8vw, 150px);
+  pointer-events: none;
+}
+
+.revealCol > * {
+  pointer-events: auto;
+}
+
+/* breadcrumb — the collapsed layers behind you */
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 22px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.crumbItem {
+  display: inline-flex;
+  align-items: center;
+  animation: revealUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.crumbs button {
+  background: none;
+  border: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: rgba(255, 255, 255, 0.45);
+  padding: 4px 0;
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+
+.crumbs button:hover {
+  color: #fff;
+}
+
+.crumbs i {
+  margin: 0 10px;
+  color: rgba(255, 255, 255, 0.22);
+  font-style: normal;
+}
+
+/* where you are */
+.revealTitle {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  color: #fff;
+  font-size: clamp(46px, 9vw, 108px);
+  animation: revealRise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.revealCopy {
+  margin-top: 20px;
+  max-width: min(46ch, 84vw);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 23px;
+  letter-spacing: 0.01em;
+  text-wrap: pretty;
+  color: rgba(255, 255, 255, 0.55);
+  animation: revealUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+/* where you can go */
+.revealList {
+  list-style: none;
+  margin: 38px 0 0;
+  padding: 0;
+  max-width: min(560px, 88vw);
+}
+
+.revealList li {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  animation: revealUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.revealList li:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.revealList button {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  width: 100%;
+  background: none;
+  border: none;
+  font-family: var(--font-display);
+  color: #d8d8d6;
+  padding: clamp(13px, 2vh, 20px) 4px;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.25s ease, padding-left 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.revealList button:hover {
+  color: #fff;
+  padding-left: 16px;
+}
+
+.revealList .idx {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.35);
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+
+.revealList .lbl {
+  font-size: clamp(20px, 3.4vw, 30px);
+  letter-spacing: 0.005em;
+  flex: 1 1 auto;
+}
+
+.revealList .tag {
+  font-family: var(--font-body);
+  font-size: 8.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 2px;
+  padding: 3px 6px;
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.revealList .arrow {
+  font-family: var(--font-body);
+  color: rgba(255, 255, 255, 0.3);
+  flex: 0 0 auto;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s ease;
+}
+
+.revealList button:hover .arrow {
+  color: #fff;
+  transform: translateX(6px);
+}
+
+/* over a leaf's media, the header sits top-left and reads on the film */
+.revealCol.overMedia {
+  justify-content: flex-start;
+  padding-top: clamp(72px, 16vh, 160px);
+}
+
+.revealCol.overMedia .revealTitle,
+.revealCol.overMedia .crumbs button,
+.revealCol.overMedia .revealCopy {
+  text-shadow: 0 1px 22px rgba(0, 0, 0, 0.85), 0 0 4px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes revealRise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+}
+
 /* ── FOCAL: the corridor — hierarchy lived in real z ──────── */
 
 .focusSpace {
