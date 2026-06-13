@@ -32,19 +32,26 @@ export default function ImageGallery({ media, idx, setIdx, full, onImageTap, onC
     drag.current.moved = Math.max(drag.current.moved, Math.abs(d))
     setDx(d)
   }
+  const SWIPE = 45 // px to commit a slide change
   const onUp = () => {
     const dr = drag.current
     drag.current = null
     setDragging(false)
     setDx(0)
     if (!dr) return
-    if (dr.moved < 10) {
-      // a tap, not a swipe — the image steps the view, the canvas exits
-      dr.onImg ? onImageTap() : onCanvasTap()
-      return
+    // a committed swipe wins over everything
+    if (dr.d < -SWIPE && idx < media.length - 1) return setIdx(idx + 1)
+    if (dr.d > SWIPE && idx > 0) return setIdx(idx - 1)
+    // not a swipe → read tap intent.
+    if (dr.onImg) {
+      // the image only steps the view on a CLEAN tap; a smeared, aborted
+      // swipe over it just snaps back (no accidental fullscreen toggle)
+      if (dr.moved < 16) onImageTap()
+    } else if (dr.moved < SWIPE) {
+      // the canvas is the way back — be forgiving with thumb jitter so it
+      // never feels dead. Anything short of a real swipe attempt exits.
+      onCanvasTap()
     }
-    if (dr.d < -55 && idx < media.length - 1) setIdx(idx + 1)
-    else if (dr.d > 55 && idx > 0) setIdx(idx - 1)
   }
 
   return (

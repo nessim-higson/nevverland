@@ -619,8 +619,14 @@ body {
   inset: 0;
   z-index: 6;
   overflow: hidden;
+  /* a solid field so the picture is the only thing in view — covers the
+     chrome behind it and gives the proportional letterbox a clean edge */
+  background: #07080a;
   cursor: grab;
-  touch-action: pan-y;
+  /* none, not pan-y: the stage doesn't scroll, so let every pointer event
+     reach us — otherwise mobile hands vertical drags to the browser and the
+     canvas-tap to exit gets swallowed */
+  touch-action: none;
   animation: fcopyIn 0.5s ease both;
 }
 
@@ -657,11 +663,13 @@ body {
   box-shadow: 0 40px 120px rgba(0, 0, 0, 0.7);
 }
 
-/* FULLSCREEN: edge to edge, no canvas */
+/* FULLSCREEN: fills the screen but keeps the image's true proportions —
+   contain, never cover, so it's never an unreadable extreme crop. The
+   letterbox margin is black canvas; tapping it (or the image) steps back. */
 .imgStage.full .galImg {
   width: 100vw;
   height: 100vh;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .imgDots {
@@ -1480,5 +1488,13 @@ body {
   .mediaFrame,
   .glStage {
     bottom: 56px;
+  }
+
+  /* the gallery image pulls in on mobile so there's a generous dark
+     border all the way around it — that border is the tap target that
+     returns you to the hero, and it needs to be easy to hit by thumb */
+  .imgStage.gallery .galImg {
+    height: 60vh;
+    max-width: 78vw;
   }
 }
